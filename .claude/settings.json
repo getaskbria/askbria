@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "Bash(npm audit)",
+      "Bash(adb devices)",
+      "Bash(adb logcat *)",
+      "Bash(curl -s http://localhost*)",
+      "Bash(export PATH*)"
+    ]
+  }
+}

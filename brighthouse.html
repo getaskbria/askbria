@@ -1,0 +1,4311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BrightHouse — Your AI Household Manager</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BrightHouse">
+<meta name="mobile-web-app-capable" content="yes">
+
+<style>
+/* ============================================================
+   RESET & ROOT TOKENS
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* iOS Safari fix: divs with onclick need cursor:pointer to receive clicks */
+[onclick] { cursor: pointer; }
+
+/* Mobile tap improvements */
+button, [onclick], .nav-item, .option-card, .feature-card, .chip,
+.meal-opt-card, .tog, .assign-helper-row, .assign-ai-card {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button { -webkit-appearance: none; appearance: none; }
+
+:root {
+  /* Palette */
+  --cream:        #FAF8F3;
+  --warm-white:   #FFFEF9;
+  --gold:         #C8994A;
+  --gold-light:   #F5E9CC;
+  --gold-dark:    #8B6420;
+  --sage:         #6B8F71;
+  --sage-light:   #EAF0EB;
+  --charcoal:     #2C2B27;
+  --mid:          #6B6860;
+  --soft:         #B8B5AC;
+  --border:       rgba(44,43,39,0.10);
+  --border-strong:rgba(44,43,39,0.20);
+  --red-soft:     #F9EDEA;
+  --red:          #C0452A;
+  --blue-soft:    #EAF0F5;
+  --blue:         #3A6B8A;
+
+  /* Typography */
+  --font-display: 'Georgia', 'Times New Roman', serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Radii */
+  --radius:       16px;
+  --radius-sm:    10px;
+  --radius-pill:  999px;
+}
+
+html {
+  overflow-x: hidden;
+}
+body {
+  height: 100%;
+  min-height: 100vh;
+  background: #E8E4DC;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  font-family: var(--font-body);
+  padding: 24px 16px 40px;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   PHONE FRAME — wraps all screens
+   ============================================================ */
+.phone {
+  width: 390px;
+  min-height: 844px;
+  background: var(--cream);
+  border-radius: 48px;
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.28),
+    0 0 0 1px rgba(0,0,0,0.12),
+    inset 0 0 0 1px rgba(255,255,255,0.5);
+  flex-shrink: 0;
+}
+
+/* On real mobile devices, take over the viewport */
+@media (max-width: 500px) {
+  html, body {
+    padding: 0;
+    margin: 0;
+    background: var(--cream);
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .phone {
+    width: 100vw;
+    min-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .phone::before { display: none; }
+  .status-bar { padding-top: env(safe-area-inset-top, 14px); height: auto; }
+  .welcome-inner { padding: 48px 24px 40px; }
+  .ob-header { padding: 20px 22px 16px; }
+  .ob-body { padding: 4px 22px 130px; }
+  .ob-bottom { padding: 14px 22px env(safe-area-inset-bottom, 28px); }
+  .bottom-nav { 
+    height: auto;
+    padding: 10px 4px env(safe-area-inset-bottom, 12px);
+  }
+  .scroll-area { padding-bottom: 120px; }
+}
+
+/* Notch */
+.phone::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%; transform: translateX(-50%);
+  width: 126px; height: 34px;
+  background: #1a1a1a;
+  border-radius: 0 0 20px 20px;
+  z-index: 100;
+}
+
+/* ============================================================
+   SCREEN SYSTEM — single-page navigation
+   ============================================================ */
+.screen {
+  display: none;
+  flex-direction: column;
+  min-height: 844px;
+  background: var(--cream);
+  position: relative;
+}
+.screen.active { display: flex; }
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+.status-bar {
+  height: 50px;
+  padding: 14px 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--charcoal);
+  letter-spacing: 0.02em;
+}
+.status-icons { display: flex; gap: 5px; align-items: center; }
+.status-bar svg { width: 16px; height: 16px; }
+
+/* ============================================================
+   SHARED UTILITIES
+   ============================================================ */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-bottom: 100px; /* room for bottom nav */
+}
+.scroll-area::-webkit-scrollbar { display: none; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--soft);
+  margin-bottom: 10px;
+}
+
+.card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: var(--charcoal);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: background 0.2s, transform 0.1s;
+  text-align: center;
+}
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary.gold {
+  background: var(--gold);
+  color: white;
+}
+.btn-primary.outline {
+  background: transparent;
+  color: var(--charcoal);
+  border: 1.5px solid var(--border-strong);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.chip {
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-strong);
+  background: var(--warm-white);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mid);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.chip.selected {
+  background: var(--charcoal);
+  border-color: var(--charcoal);
+  color: white;
+}
+
+/* ============================================================
+   SCREEN 1 — WELCOME / LANDING
+   ============================================================ */
+#screen-welcome {
+  background: var(--charcoal);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative blobs */
+#screen-welcome::after {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.welcome-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 60px 32px 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-mark {
+  width: 64px; height: 64px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 40px;
+  position: relative;
+}
+.logo-mark::after {
+  content: '';
+  position: absolute;
+  bottom: -6px; right: -6px;
+  width: 24px; height: 24px;
+  background: var(--gold);
+  border-radius: 50%;
+}
+.logo-mark span {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: white;
+  line-height: 1;
+}
+
+.welcome-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+.welcome-title {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 9vw, 40px);
+  color: white;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+.welcome-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+.welcome-desc {
+  font-size: 15px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.7;
+  font-weight: 300;
+  max-width: 300px;
+}
+
+.welcome-features {
+  margin: 32px 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wf-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 400;
+}
+.wf-dot {
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.welcome-cta {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.welcome-cta .btn-primary {
+  background: var(--gold);
+}
+.welcome-cta .btn-signin {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+  padding: 8px;
+}
+.welcome-cta .btn-signin span {
+  color: rgba(255,255,255,0.75);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ============================================================
+   SCREEN 2 — ONBOARDING
+   ============================================================ */
+#screen-onboard .ob-header {
+  padding: 56px 28px 20px;
+  background: var(--cream);
+}
+
+.ob-progress-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 28px;
+}
+.ob-prog-seg {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--border-strong);
+  transition: background 0.3s;
+}
+.ob-prog-seg.done  { background: var(--gold); }
+.ob-prog-seg.active { background: var(--charcoal); }
+
+.ob-step-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  margin-bottom: 8px;
+}
+.ob-q-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--charcoal);
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+.ob-q-sub {
+  font-size: 13px;
+  color: var(--mid);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.ob-body {
+  padding: 4px 28px 130px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  flex: 1;
+}
+.ob-body::-webkit-scrollbar { display: none; }
+
+/* Panels */
+.ob-panel { display: none; }
+.ob-panel.active { display: block; }
+
+/* Stepper */
+.stepper-block { margin-bottom: 24px; }
+.stepper-block-label {
+  font-size: 13px;
+  color: var(--mid);
+  margin-bottom: 10px;
+}
+.stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--warm-white);
+  overflow: hidden;
+  width: fit-content;
+}
+.step-btn {
+  width: 52px; height: 52px;
+  border: none; background: transparent;
+  font-size: 22px; cursor: pointer;
+  color: var(--charcoal);
+  transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-btn:hover { background: var(--cream); }
+.step-val {
+  width: 64px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--charcoal);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 10px 0;
+  line-height: 1;
+}
+
+/* Option cards */
+.option-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.option-card {
+  padding: 14px 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.option-card:hover { border-color: var(--gold); }
+.option-card.selected {
+  border-color: var(--charcoal);
+  background: var(--charcoal);
+  color: white;
+}
+.opt-left { display: flex; align-items: center; gap: 12px; }
+.opt-emoji { font-size: 20px; }
+.opt-label { font-size: 14px; font-weight: 500; color: var(--charcoal); }
+.option-card.selected .opt-label { color: white; }
+.opt-sub { font-size: 12px; color: var(--mid); margin-top: 2px; }
+.option-card.selected .opt-sub { color: rgba(255,255,255,0.55); }
+.opt-check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.option-card.selected .opt-check { background: var(--gold); border-color: var(--gold); }
+.opt-check svg { width: 12px; height: 12px; opacity: 0; }
+.option-card.selected .opt-check svg { opacity: 1; }
+
+/* Feature checkboxes grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.feature-card {
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.feature-card:hover { border-color: var(--gold); }
+.feature-card.selected {
+  border-color: var(--charcoal);
+  background: var(--charcoal);
+}
+.feat-emoji { font-size: 18px; }
+.feat-label { font-size: 12px; font-weight: 500; color: var(--charcoal); }
+.feature-card.selected .feat-label { color: white; }
+
+/* Text inputs */
+.ob-input {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--charcoal);
+  outline: none;
+  transition: border-color 0.2s;
+  margin-top: 10px;
+}
+.ob-input:focus { border-color: var(--gold); }
+.ob-input::placeholder { color: var(--soft); }
+
+/* Toggle rows */
+.toggle-list { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-left { display: flex; align-items: center; gap: 12px; }
+.toggle-icon {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  background: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.toggle-label { font-size: 14px; font-weight: 500; color: var(--charcoal); }
+.toggle-sub { font-size: 12px; color: var(--mid); margin-top: 1px; }
+/* iOS toggle */
+.tog {
+  width: 48px; height: 28px;
+  background: var(--soft);
+  border-radius: 14px;
+  position: relative; cursor: pointer;
+  transition: background 0.2s; flex-shrink: 0;
+}
+.tog.on { background: var(--sage); }
+.tog::after {
+  content: '';
+  width: 22px; height: 22px;
+  background: white;
+  border-radius: 50%;
+  position: absolute; top: 3px; left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.tog.on::after { transform: translateX(20px); }
+
+/* Ob bottom bar */
+.ob-bottom {
+  position: sticky;
+  bottom: 0;
+  padding: 16px 28px 36px;
+  background: linear-gradient(to top, var(--cream) 70%, transparent);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.btn-ob-back {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--charcoal);
+  font-size: 18px; flex-shrink: 0;
+  transition: background 0.2s;
+}
+.btn-ob-back:hover { background: var(--cream); }
+.btn-ob-next {
+  flex: 1;
+  padding: 14px;
+  background: var(--charcoal);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 15px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-ob-next:active { transform: scale(0.98); }
+
+/* ============================================================
+   SCREEN 3 — DASHBOARD
+   ============================================================ */
+.top-bar {
+  padding: 50px 22px 0;
+  background: var(--warm-white);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.top-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+}
+.greeting-sub {
+  font-size: 12px;
+  color: var(--mid);
+  letter-spacing: 0.03em;
+}
+.greeting-name {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 5vw, 22px);
+  color: var(--charcoal);
+  margin-top: 2px;
+}
+.avatar-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--charcoal);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 16px; color: white;
+  position: relative;
+}
+.avatar-notif {
+  width: 10px; height: 10px;
+  background: var(--gold);
+  border-radius: 50%;
+  position: absolute; top: 0; right: 0;
+  border: 2px solid var(--warm-white);
+}
+
+.dash-body {
+  padding: 20px 20px 0;
+}
+
+/* Date strip */
+.date-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.date-label {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--charcoal);
+  letter-spacing: -0.2px;
+}
+.date-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+
+/* Hero card */
+.hero-card {
+  background: var(--charcoal);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::after {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+  opacity: 0.25;
+}
+.hero-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.hero-card-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: white;
+  margin-bottom: 4px;
+}
+.hero-card-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 300;
+}
+.hero-card-items {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hero-chip {
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 11px;
+  color: rgba(255,255,255,0.75);
+}
+.hero-chip.missing {
+  background: rgba(192,69,42,0.25);
+  border-color: rgba(192,69,42,0.4);
+  color: #F5907A;
+}
+
+/* Two-col grid */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Stat card */
+.stat-card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.stat-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  margin-bottom: 10px;
+}
+.stat-icon.amber  { background: #FEF3E2; }
+.stat-icon.green  { background: var(--sage-light); }
+.stat-icon.red    { background: var(--red-soft); }
+.stat-icon.blue   { background: var(--blue-soft); }
+.stat-number {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--charcoal);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--mid);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Task list card */
+.task-card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.task-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.task-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+.task-count-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--red-soft);
+  color: var(--red);
+}
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.task-item:last-child { border-bottom: none; }
+.task-checkbox {
+  width: 20px; height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-strong);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.task-item.done .task-checkbox {
+  background: var(--sage);
+  border-color: var(--sage);
+}
+.task-item.done .task-checkbox::after {
+  content: '✓';
+  font-size: 11px;
+  color: white;
+  font-weight: 700;
+}
+.task-text {
+  font-size: 13px;
+  color: var(--charcoal);
+  flex: 1;
+}
+.task-item.done .task-text {
+  color: var(--soft);
+  text-decoration: line-through;
+}
+.task-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-light);
+  color: var(--sage);
+}
+.task-tag.red { background: var(--red-soft); color: var(--red); }
+.task-tag.blue { background: var(--blue-soft); color: var(--blue); }
+.task-tag.amber { background: #FEF3E2; color: #8B5E0A; }
+
+/* Supply list */
+.supply-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.supply-item:last-child { border-bottom: none; }
+.supply-left { display: flex; align-items: center; gap: 10px; }
+.supply-emoji { font-size: 18px; }
+.supply-name { font-size: 13px; font-weight: 500; color: var(--charcoal); }
+.supply-count { font-size: 11px; color: var(--mid); }
+.supply-bar-wrap {
+  width: 70px;
+  height: 5px;
+  background: var(--border-strong);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.supply-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--sage);
+}
+.supply-bar.low { background: var(--red); }
+.supply-bar.warn { background: var(--gold); }
+
+/* Reminder banner */
+.reminder-banner {
+  background: var(--blue-soft);
+  border: 1px solid rgba(58,107,138,0.2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.reminder-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.reminder-title { font-size: 13px; font-weight: 600; color: var(--blue); }
+.reminder-sub { font-size: 11px; color: rgba(58,107,138,0.7); margin-top: 2px; }
+
+/* Ask button (FAB) */
+.fab {
+  position: absolute;
+  bottom: 88px;
+  right: 16px;
+  width: 54px; height: 54px;
+  background: var(--gold);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(200,153,74,0.4);
+  z-index: 50;
+  transition: transform 0.2s;
+}
+.fab:hover { transform: scale(1.05); }
+.fab svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 2; }
+
+/* ============================================================
+   SCREEN 4 — MEAL PLANNING
+   ============================================================ */
+.inner-header {
+  padding: 50px 22px 16px;
+  background: var(--warm-white);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.back-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.back-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--charcoal);
+}
+.inner-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--charcoal);
+  letter-spacing: -0.3px;
+}
+.inner-sub {
+  font-size: 13px;
+  color: var(--mid);
+  font-weight: 300;
+  margin-top: 2px;
+}
+
+.meal-body { padding: 20px; }
+
+/* Meal option cards */
+.meal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.meal-opt-card {
+  background: var(--warm-white);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.meal-opt-card:hover { border-color: var(--gold); }
+.meal-opt-card.featured {
+  background: var(--charcoal);
+  border-color: var(--charcoal);
+}
+.meal-opt-left { display: flex; align-items: center; gap: 14px; }
+.meal-emoji { font-size: 28px; }
+.meal-opt-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+.meal-opt-card.featured .meal-opt-name { color: white; }
+.meal-opt-desc {
+  font-size: 12px;
+  color: var(--mid);
+  margin-top: 2px;
+}
+.meal-opt-card.featured .meal-opt-desc { color: rgba(255,255,255,0.5); }
+.meal-time-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--gold-light);
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+.meal-opt-card.featured .meal-time-badge {
+  background: rgba(200,153,74,0.3);
+  color: var(--gold-light);
+}
+
+/* Weekly strip */
+.week-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+.week-strip::-webkit-scrollbar { display: none; }
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.week-day-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.week-day.today .week-day-label { color: var(--gold-dark); }
+.week-day-pill {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--mid);
+  text-align: center;
+  white-space: nowrap;
+  min-width: 64px;
+}
+.week-day.today .week-day-pill {
+  background: var(--charcoal);
+  border-color: var(--charcoal);
+  color: white;
+  font-weight: 500;
+}
+
+/* Grocery preview */
+.grocery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 12px 0 20px;
+}
+.grocery-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--charcoal);
+}
+.grocery-item:last-child { border-bottom: none; }
+.grocery-left { display: flex; align-items: center; gap: 10px; }
+.grocery-emoji { font-size: 16px; }
+.grocery-needed {
+  font-size: 11px;
+  color: var(--mid);
+}
+.grocery-check-empty {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+}
+
+/* ============================================================
+   SCREEN 5 — VENDORS & CONCIERGE
+   ============================================================ */
+.vendor-body { padding: 20px; }
+
+/* Concierge banner */
+.concierge-banner {
+  background: linear-gradient(135deg, var(--charcoal) 0%, #3D3C38 100%);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.concierge-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -30px;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+  opacity: 0.3;
+}
+.concierge-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.concierge-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: white;
+  margin-bottom: 8px;
+}
+.concierge-desc {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.6;
+  font-weight: 300;
+  margin-bottom: 16px;
+}
+.concierge-phase-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(200,153,74,0.2);
+  border: 1px solid rgba(200,153,74,0.35);
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+/* Vendor cards */
+.vendor-card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.vendor-icon {
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.vendor-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+.vendor-contact {
+  font-size: 12px;
+  color: var(--mid);
+  margin-top: 2px;
+}
+.vendor-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.vendor-status.active { background: var(--sage-light); color: #2D6B34; }
+.vendor-status.due    { background: var(--red-soft); color: var(--red); }
+.vendor-status.sched  { background: var(--blue-soft); color: var(--blue); }
+.vendor-status.future { background: var(--gold-light); color: var(--gold-dark); }
+
+/* Future feature label */
+.future-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--gold-light);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+.future-label-text {
+  font-size: 12px;
+  color: var(--gold-dark);
+  font-weight: 500;
+}
+
+/* ============================================================
+   BOTTOM NAVIGATION
+   ============================================================ */
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  height: 72px;
+  background: var(--warm-white);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  z-index: 40;
+  flex-shrink: 0;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+  flex: 1;
+}
+.nav-item:hover { background: var(--cream); }
+.nav-item svg {
+  width: 22px; height: 22px;
+  stroke: var(--soft);
+  fill: none;
+  stroke-width: 1.8;
+  transition: stroke 0.15s;
+}
+.nav-item.active svg { stroke: var(--charcoal); }
+.nav-item span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--soft);
+  transition: color 0.15s;
+}
+.nav-item.active span { color: var(--charcoal); }
+.nav-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  position: absolute;
+  top: 6px; right: 6px;
+}
+
+/* ============================================================
+   ASSIGN MODAL — bottom sheet
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal-sheet {
+  width: 100%;
+  max-width: 390px;
+  background: var(--warm-white);
+  border-radius: 28px 28px 0 0;
+  padding: 0 0 40px;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+}
+.modal-overlay.open .modal-sheet {
+  transform: translateY(0);
+}
+.modal-handle {
+  width: 36px; height: 4px;
+  background: var(--border-strong);
+  border-radius: 2px;
+  margin: 12px auto 20px;
+}
+.modal-header {
+  padding: 0 22px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-task-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--soft);
+  margin-bottom: 5px;
+}
+.modal-task-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--charcoal);
+  line-height: 1.3;
+}
+.modal-body { padding: 16px 22px 0; }
+.modal-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--soft);
+  margin-bottom: 10px;
+}
+
+/* BrightHouse AI option */
+.assign-ai-card {
+  background: var(--charcoal);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: transform 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.assign-ai-card::after {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+  opacity: 0.3;
+}
+.assign-ai-card:active { transform: scale(0.98); }
+.assign-ai-icon {
+  width: 42px; height: 42px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.assign-ai-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+}
+.assign-ai-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+.assign-ai-arrow {
+  margin-left: auto;
+  color: rgba(255,255,255,0.4);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Helper person options */
+.assign-helper-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--warm-white);
+}
+.assign-helper-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.assign-helper-row:last-child { border-bottom: none; }
+.assign-helper-row:hover { background: var(--cream); }
+.assign-helper-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  font-family: var(--font-display);
+  color: white;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.assign-helper-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+.assign-helper-role {
+  font-size: 11px;
+  color: var(--mid);
+  margin-top: 1px;
+}
+.assign-helper-arrow {
+  margin-left: auto;
+  color: var(--soft);
+  font-size: 16px;
+}
+
+/* Assign button on task/supply rows */
+.assign-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mid);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.assign-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold-dark);
+}
+.assign-btn svg {
+  width: 11px; height: 11px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+.assign-btn.assigned {
+  border-color: var(--sage);
+  color: var(--sage);
+  background: var(--sage-light);
+}
+
+/* Assigned indicator on task row */
+.task-assigned-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--sage);
+  font-weight: 500;
+  margin-top: 3px;
+}
+.task-assigned-dot {
+  width: 6px; height: 6px;
+  background: var(--sage);
+  border-radius: 50%;
+}
+
+/* ============================================================
+   COOK WHAT I HAVE — AI feature card + modal
+   ============================================================ */
+.cwih-card {
+  background: linear-gradient(135deg, var(--charcoal) 0%, #3D3C38 60%, #5A4B2E 100%);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: transform 0.2s;
+}
+.cwih-card:active { transform: scale(0.99); }
+.cwih-card::after {
+  content: '';
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+  opacity: 0.30;
+  pointer-events: none;
+}
+.cwih-badge {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(200,153,74,0.25);
+  border: 1px solid rgba(200,153,74,0.5);
+  color: var(--gold);
+  z-index: 1;
+}
+.cwih-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+.cwih-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: white;
+  margin-bottom: 6px;
+  position: relative; z-index: 1;
+}
+.cwih-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+  font-weight: 300;
+  margin-bottom: 12px;
+  max-width: 280px;
+  position: relative; z-index: 1;
+}
+.cwih-tag-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  position: relative; z-index: 1;
+}
+.cwih-tag {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+}
+
+/* Pantry chip selectable */
+.pantry-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--warm-white);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mid);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.pantry-chip.selected {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: white;
+}
+.pantry-chip .x {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* Suggested meal card (within modal) */
+.suggest-meal {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.suggest-meal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.suggest-meal-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--charcoal);
+  display: flex; align-items: center; gap: 8px;
+}
+.suggest-time {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+.suggest-line {
+  font-size: 12px;
+  color: var(--mid);
+  margin-bottom: 5px;
+  line-height: 1.5;
+}
+.suggest-line b { color: var(--sage); font-weight: 600; }
+.suggest-line.miss b { color: var(--red); }
+.suggest-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.suggest-btn {
+  flex: 1;
+  padding: 7px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--warm-white);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--charcoal);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.suggest-btn:hover { border-color: var(--gold); color: var(--gold-dark); }
+.suggest-btn.primary { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+
+/* ============================================================
+   ASK BRIA HERO CARD
+   ============================================================ */
+.ask-bria-card {
+  background: linear-gradient(135deg, var(--warm-white) 0%, var(--sage-light) 100%);
+  border: 1px solid rgba(107,143,113,0.2);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.ask-bria-icon {
+  position: absolute;
+  top: 14px; right: 18px;
+  font-size: 32px;
+  color: var(--gold);
+  opacity: 0.85;
+}
+.ask-bria-content { position: relative; }
+.ask-bria-eyebrow {
+  font-size: 12px;
+  color: var(--mid);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.ask-bria-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--charcoal);
+  line-height: 1.2;
+  margin-bottom: 14px;
+  max-width: 230px;
+  letter-spacing: -0.3px;
+}
+.ask-bria-input {
+  background: var(--warm-white);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+.ask-bria-input:hover { border-color: var(--gold); }
+.ask-bria-input span {
+  font-size: 13px;
+  color: var(--soft);
+  font-style: italic;
+}
+.ask-bria-mic {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--charcoal);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: white;
+}
+.ask-bria-suggestions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bria-chip {
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border-strong);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--charcoal);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.bria-chip:hover { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+
+/* ============================================================
+   TODAY AT A GLANCE (3 small stats)
+   ============================================================ */
+.glance-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.glance-stat {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.glance-stat:hover { border-color: var(--gold); transform: translateY(-1px); }
+.glance-icon {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.glance-num {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--charcoal);
+  line-height: 1;
+}
+.glance-lbl {
+  font-size: 10px;
+  color: var(--mid);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   TONIGHT'S DINNER (soft one-liner card)
+   ============================================================ */
+.dinner-card {
+  background: linear-gradient(135deg, var(--warm-white) 0%, #FFF6E0 100%);
+  border: 1px solid rgba(200,153,74,0.25);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.dinner-card:hover { border-color: var(--gold); }
+.dinner-emoji { font-size: 28px; flex-shrink: 0; }
+.dinner-content { flex: 1; min-width: 0; }
+.dinner-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-dark);
+  margin-bottom: 3px;
+}
+.dinner-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--charcoal);
+  letter-spacing: -0.2px;
+  margin-bottom: 5px;
+  line-height: 1.2;
+}
+.dinner-meta {
+  font-size: 11px;
+  color: var(--mid);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  line-height: 1.4;
+}
+.dinner-arrow {
+  font-size: 22px;
+  color: var(--gold-dark);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   ASSIGNED TASK STATUS BLOCK
+   ============================================================ */
+.assigned-detail {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-top: 10px;
+  margin-left: 32px;
+  width: calc(100% - 32px);
+}
+.assigned-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--mid);
+  padding: 3px 0;
+}
+.assigned-row b { color: var(--charcoal); font-weight: 600; }
+.assigned-row .lbl {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--soft);
+  min-width: 78px;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.status-pill.sent     { background: var(--sage-light); color: var(--sage); }
+.status-pill.pending  { background: #FEF3E2;           color: #8B5E0A; }
+.status-pill.received { background: var(--blue-soft);  color: var(--blue); }
+.status-pill::before {
+  content: '';
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+}
+
+.task-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.task-action-btn {
+  flex: 1;
+  min-width: calc(50% - 3px);
+  padding: 7px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--warm-white);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--charcoal);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.task-action-btn:hover { background: var(--cream); border-color: var(--gold); color: var(--gold-dark); }
+.task-action-btn.primary { background: var(--charcoal); color: white; border-color: var(--charcoal); }
+.task-action-btn.primary:hover { background: #3D3C38; color: white; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen.active .card,
+.screen.active .hero-card,
+.screen.active .stat-card,
+.screen.active .task-card,
+.screen.active .reminder-banner,
+.screen.active .meal-opt-card,
+.screen.active .vendor-card {
+  animation: fadeSlideUp 0.4s ease both;
+}
+.screen.active .card:nth-child(2)  { animation-delay: 0.05s; }
+.screen.active .card:nth-child(3)  { animation-delay: 0.10s; }
+
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+<!-- ══════════════════════════════════════
+     SCREEN 1 — WELCOME / LANDING
+══════════════════════════════════════ -->
+<div class="screen active" id="screen-welcome">
+
+  <!-- Variant switcher (demo only) -->
+  <div style="position:absolute; top:env(safe-area-inset-top, 14px); left:50%; transform:translateX(-50%); z-index:20; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); border-radius:999px; padding:5px; display:flex; gap:2px; box-shadow:0 4px 16px rgba(0,0,0,0.15);">
+    <button id="welcome-tab-a" onclick="showWelcome('a')" style="padding:7px 14px; border:none; background:var(--charcoal); color:white; border-radius:999px; font-family:var(--font-body); font-size:11px; font-weight:600; cursor:pointer;">A · Calm</button>
+    <button id="welcome-tab-b" onclick="showWelcome('b')" style="padding:7px 14px; border:none; background:transparent; color:var(--mid); border-radius:999px; font-family:var(--font-body); font-size:11px; font-weight:600; cursor:pointer;">B · Warm</button>
+    <button id="welcome-tab-c" onclick="showWelcome('c')" style="padding:7px 14px; border:none; background:transparent; color:var(--mid); border-radius:999px; font-family:var(--font-body); font-size:11px; font-weight:600; cursor:pointer;">C · Bright</button>
+  </div>
+
+  <!-- ═══ VARIANT A · SOFT & CALM (cream, magazine-editorial) ═══ -->
+  <div class="welcome-variant" id="welcome-a" style="flex:1; display:flex; flex-direction:column; background:var(--cream); position:relative; overflow:hidden;">
+    <!-- Subtle decorative element -->
+    <div style="position:absolute; top:-100px; right:-80px; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(200,153,74,0.08) 0%, transparent 70%); pointer-events:none;"></div>
+    <div style="position:absolute; bottom:-60px; left:-40px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(107,143,113,0.10) 0%, transparent 70%); pointer-events:none;"></div>
+
+    <div style="flex:1; display:flex; flex-direction:column; padding:80px 32px 40px; position:relative; z-index:1;">
+      <!-- Logo -->
+      <div style="width:56px; height:56px; background:var(--charcoal); border-radius:18px; display:flex; align-items:center; justify-content:center; margin-bottom:48px; position:relative;">
+        <span style="font-family:var(--font-display); font-size:24px; color:white;">B</span>
+        <div style="position:absolute; bottom:-4px; right:-4px; width:18px; height:18px; background:var(--gold); border-radius:50%;"></div>
+      </div>
+
+      <div style="font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold-dark); margin-bottom:18px;">Bria by BrightHouse</div>
+      <div style="font-family:var(--font-display); font-size:clamp(36px, 11vw, 48px); color:var(--charcoal); line-height:1.05; letter-spacing:-0.8px; margin-bottom:24px;">A calmer way<br>to <em style="font-style:italic; color:var(--gold-dark);">run home.</em></div>
+      <div style="font-size:15px; color:var(--mid); line-height:1.65; font-weight:300; max-width:320px;">Meet Bria — your AI household assistant. She plans meals, tracks supplies, sets reminders, and helps coordinate your home so you can stop carrying it all in your head.</div>
+
+      <!-- Inline tip card -->
+      <div style="margin-top:36px; background:var(--warm-white); border-radius:18px; padding:18px; box-shadow:0 8px 24px rgba(0,0,0,0.04);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <span style="font-size:18px; color:var(--gold);">✦</span>
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--gold-dark);">Bria says</div>
+        </div>
+        <div style="font-size:13px; color:var(--charcoal); line-height:1.6; font-style:italic;">"Tonight's dinner is handled. Maria has her instructions for Friday. Your AC filter ships Tuesday."</div>
+      </div>
+
+      <div style="margin-top:auto; padding-top:32px;">
+        <button class="btn-primary" style="background:var(--charcoal);" onclick="showScreen('screen-onboard')">Get Started</button>
+        <div style="text-align:center; font-size:12px; color:var(--mid); margin-top:14px;">Already have an account? <span style="color:var(--charcoal); font-weight:600; cursor:pointer; text-decoration:underline;">Sign in</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VARIANT B · WARM & INVITING (sage + gold, cozy) ═══ -->
+  <div class="welcome-variant" id="welcome-b" style="flex:1; display:none; flex-direction:column; background:linear-gradient(180deg, #F4EDD8 0%, #E8E1CC 100%); position:relative; overflow:hidden;">
+
+    <div style="flex:1; display:flex; flex-direction:column; padding:80px 32px 40px; position:relative; z-index:1;">
+      <!-- Logo -->
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:48px;">
+        <div style="width:48px; height:48px; background:linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%); border-radius:14px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(200,153,74,0.3);">
+          <span style="font-family:var(--font-display); font-size:22px; color:white;">B</span>
+        </div>
+        <div>
+          <div style="font-family:var(--font-display); font-size:18px; color:var(--charcoal); line-height:1;">BrightHouse</div>
+          <div style="font-size:10px; color:var(--mid); letter-spacing:0.08em; text-transform:uppercase; margin-top:2px;">with Bria AI</div>
+        </div>
+      </div>
+
+      <div style="font-family:var(--font-display); font-size:clamp(34px, 10vw, 44px); color:var(--charcoal); line-height:1.1; letter-spacing:-0.5px; margin-bottom:18px;">Home, but easier.</div>
+      <div style="font-size:15px; color:#5B4D2C; line-height:1.6; max-width:320px; margin-bottom:32px;">From dinner ideas to coordinating your cleaner — Bria takes care of the mental load so you can take care of everything else.</div>
+
+      <!-- Feature pills (warmer style) -->
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:36px;">
+        <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.55); border-radius:14px; padding:12px 16px; backdrop-filter:blur(8px);">
+          <span style="font-size:22px;">🍽️</span>
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--charcoal);">Smart meal planning</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:1px;">"What's for dinner?" — solved.</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.55); border-radius:14px; padding:12px 16px; backdrop-filter:blur(8px);">
+          <span style="font-size:22px;">🧹</span>
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--charcoal);">Cleaning coordination</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:1px;">DIY routines or staff prep.</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.55); border-radius:14px; padding:12px 16px; backdrop-filter:blur(8px);">
+          <span style="font-size:22px;">🗂️</span>
+          <div>
+            <div style="font-size:13px; font-weight:600; color:var(--charcoal);">All your household docs</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:1px;">Warranties, receipts, recipes.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:auto;">
+        <button class="btn-primary gold" onclick="showScreen('screen-onboard')">Set Up My Household →</button>
+        <div style="text-align:center; font-size:12px; color:var(--mid); margin-top:14px;">7-day free trial · No card required</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VARIANT C · BRIGHT & OPTIMISTIC (peach/coral, fresh) ═══ -->
+  <div class="welcome-variant" id="welcome-c" style="flex:1; display:none; flex-direction:column; background:linear-gradient(180deg, #FFF1E8 0%, #FFE4D6 100%); position:relative; overflow:hidden;">
+
+    <!-- Coral decorative blob -->
+    <div style="position:absolute; top:-80px; right:-80px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle, rgba(225,142,107,0.30) 0%, transparent 70%); pointer-events:none;"></div>
+    <div style="position:absolute; bottom:-100px; left:-60px; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, rgba(200,153,74,0.20) 0%, transparent 70%); pointer-events:none;"></div>
+
+    <div style="flex:1; display:flex; flex-direction:column; padding:80px 32px 40px; position:relative; z-index:1;">
+      <!-- Logo + sparkle -->
+      <div style="position:relative; width:fit-content; margin-bottom:40px;">
+        <div style="width:60px; height:60px; background:white; border-radius:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(225,142,107,0.25);">
+          <span style="font-family:var(--font-display); font-size:28px; color:#D86B47;">B</span>
+        </div>
+        <div style="position:absolute; top:-8px; right:-12px; font-size:22px;">✨</div>
+      </div>
+
+      <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.6); padding:6px 12px; border-radius:999px; width:fit-content; margin-bottom:18px; backdrop-filter:blur(8px);">
+        <span style="width:6px; height:6px; background:#22C55E; border-radius:50%; box-shadow:0 0 8px rgba(34,197,94,0.6);"></span>
+        <span style="font-size:11px; font-weight:600; color:#5C3A24;">Bria is online</span>
+      </div>
+
+      <div style="font-family:var(--font-display); font-size:clamp(36px, 11vw, 46px); color:#3D2817; line-height:1.05; letter-spacing:-0.6px; margin-bottom:18px;">Your house just got a <em style="color:#D86B47; font-style:italic;">manager.</em></div>
+      <div style="font-size:15px; color:#7A5C42; line-height:1.6; max-width:320px; margin-bottom:32px; font-weight:400;">Bria handles the household to-dos so you can be the person — not the project manager — at home.</div>
+
+      <!-- Chat preview mockup -->
+      <div style="background:white; border-radius:20px; padding:14px; box-shadow:0 10px 30px rgba(216,107,71,0.15);">
+        <div style="display:flex; gap:10px; align-items:flex-start; margin-bottom:10px;">
+          <div style="width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg, #D86B47, #C8994A); display:flex; align-items:center; justify-content:center; color:white; font-size:14px; flex-shrink:0;">✦</div>
+          <div style="flex:1; background:#FFF1E8; padding:10px 12px; border-radius:14px 14px 14px 4px;">
+            <div style="font-size:12px; color:#3D2817; line-height:1.4;">Good morning! Want me to plan dinner around what's in your fridge?</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; padding-left:40px;">
+          <div style="font-size:11px; padding:5px 10px; background:#3D2817; color:white; border-radius:999px;">Yes please</div>
+          <div style="font-size:11px; padding:5px 10px; background:#F5E6D8; color:#5C3A24; border-radius:999px;">Later</div>
+        </div>
+      </div>
+
+      <div style="margin-top:auto; padding-top:32px;">
+        <button class="btn-primary" style="background:#D86B47; color:white;" onclick="showScreen('screen-onboard')">Try Bria Free →</button>
+        <div style="text-align:center; font-size:12px; color:#7A5C42; margin-top:14px;">Join 12,000+ households running smoother</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN 2 — ONBOARDING (8 steps)
+══════════════════════════════════════ -->
+<div class="screen" id="screen-onboard">
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 6c7.2-8 14.8-8 22 0"/><path d="M5 10c5-6 9-6 14 0"/><path d="M9 14c2-2.5 4-2.5 6 0"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="7" width="4" height="10" rx="1"/><rect x="7" y="5" width="4" height="12" rx="1"/><rect x="13" y="3" width="4" height="14" rx="1"/><rect x="19" y="1" width="4" height="16" rx="1" opacity="0.3"/></svg>
+    </div>
+  </div>
+
+  <!-- Progress + question header -->
+  <div class="ob-header">
+    <div class="ob-progress-row" id="ob-segs">
+      <div class="ob-prog-seg active"></div>
+      <div class="ob-prog-seg"></div>
+      <div class="ob-prog-seg"></div>
+      <div class="ob-prog-seg"></div>
+      <div class="ob-prog-seg"></div>
+      <div class="ob-prog-seg"></div>
+      <div class="ob-prog-seg"></div>
+      <div class="ob-prog-seg"></div>
+    </div>
+    <div class="ob-step-label" id="ob-step-label">Step 1 of 8</div>
+    <div class="ob-q-title" id="ob-q-title">Who calls this place home?</div>
+    <div class="ob-q-sub" id="ob-q-sub">Help us tailor BrightHouse perfectly for your household.</div>
+  </div>
+
+  <!-- Scrollable panels -->
+  <div class="ob-body">
+
+    <!-- PANEL 1: Household size -->
+    <div class="ob-panel active" id="ob-panel-1">
+      <div class="stepper-block">
+        <div class="stepper-block-label">Number of adults</div>
+        <div class="stepper-row">
+          <button class="step-btn" onclick="stepChange('adults',-1)">−</button>
+          <div class="step-val" id="adults-val">2</div>
+          <button class="step-btn" onclick="stepChange('adults',1)">+</button>
+        </div>
+      </div>
+      <div class="stepper-block">
+        <div class="stepper-block-label">Number of children / teens</div>
+        <div class="stepper-row">
+          <button class="step-btn" onclick="stepChange('kids',-1)">−</button>
+          <div class="step-val" id="kids-val">1</div>
+          <button class="step-btn" onclick="stepChange('kids',1)">+</button>
+        </div>
+      </div>
+
+      <!-- Age group breakdown -->
+      <div class="stepper-block">
+        <div class="stepper-block-label">👶 Age groups <span style="color:var(--soft); font-size:11px;">(helps tailor meals & chores)</span></div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">👶</span>
+              <div>
+                <div style="font-size:13px; font-weight:500; color:var(--charcoal);">Baby / Toddler</div>
+                <div style="font-size:11px; color:var(--mid);">Ages 0–4</div>
+              </div>
+            </div>
+            <div class="stepper-row" style="transform:scale(0.85); transform-origin:right;">
+              <button class="step-btn" onclick="stepChange('ageBaby',-1)">−</button>
+              <div class="step-val" id="ageBaby-val">0</div>
+              <button class="step-btn" onclick="stepChange('ageBaby',1)">+</button>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">🧒</span>
+              <div>
+                <div style="font-size:13px; font-weight:500; color:var(--charcoal);">Kid</div>
+                <div style="font-size:11px; color:var(--mid);">Ages 5–12</div>
+              </div>
+            </div>
+            <div class="stepper-row" style="transform:scale(0.85); transform-origin:right;">
+              <button class="step-btn" onclick="stepChange('ageKid',-1)">−</button>
+              <div class="step-val" id="ageKid-val">1</div>
+              <button class="step-btn" onclick="stepChange('ageKid',1)">+</button>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-size:20px;">🧑</span>
+              <div>
+                <div style="font-size:13px; font-weight:500; color:var(--charcoal);">Teen</div>
+                <div style="font-size:11px; color:var(--mid);">Ages 13–17</div>
+              </div>
+            </div>
+            <div class="stepper-row" style="transform:scale(0.85); transform-origin:right;">
+              <button class="step-btn" onclick="stepChange('ageTeen',-1)">−</button>
+              <div class="step-val" id="ageTeen-val">0</div>
+              <button class="step-btn" onclick="stepChange('ageTeen',1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stepper-block">
+        <div class="stepper-block-label">Number of pets</div>
+        <div class="stepper-row">
+          <button class="step-btn" onclick="stepChange('pets',-1)">−</button>
+          <div class="step-val" id="pets-val">0</div>
+          <button class="step-btn" onclick="stepChange('pets',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: Home type -->
+    <div class="ob-panel" id="ob-panel-2">
+      <div class="option-grid">
+        <div class="option-card" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🏠</span><div><div class="opt-label">Single-family Home</div><div class="opt-sub">Detached or semi-detached</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+        <div class="option-card" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🏢</span><div><div class="opt-label">Apartment / Condo</div><div class="opt-sub">Unit within a building</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+        <div class="option-card selected" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🏡</span><div><div class="opt-label">Villa / Estate</div><div class="opt-sub">Large property with grounds</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+        <div class="option-card" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🏘️</span><div><div class="opt-label">Townhouse</div><div class="opt-sub">Multi-floor attached home</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+        <div class="option-card" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🏗️</span><div><div class="opt-label">Multi-residence</div><div class="opt-sub">More than one property</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: Home features -->
+    <div class="ob-panel" id="ob-panel-3">
+      <div class="feature-grid">
+        <div class="feature-card selected" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🚗</span><span class="feat-label">Garage</span></div>
+        <div class="feature-card selected" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🏊</span><span class="feat-label">Pool</span></div>
+        <div class="feature-card" onclick="this.classList.toggle('selected')"><span class="feat-emoji">📦</span><span class="feat-label">Storage Room</span></div>
+        <div class="feature-card selected" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🌿</span><span class="feat-label">Garden / Yard</span></div>
+        <div class="feature-card selected" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🧺</span><span class="feat-label">Laundry Room</span></div>
+        <div class="feature-card" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🍞</span><span class="feat-label">Pantry</span></div>
+        <div class="feature-card" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🪴</span><span class="feat-label">Balcony / Terrace</span></div>
+        <div class="feature-card" onclick="this.classList.toggle('selected')"><span class="feat-emoji">🔒</span><span class="feat-label">Gate / Security</span></div>
+      </div>
+
+      <!-- Cars stepper -->
+      <div class="stepper-block" style="margin-top:24px;">
+        <div class="stepper-block-label">🚙 Number of cars in the household</div>
+        <div class="stepper-row">
+          <button class="step-btn" onclick="stepChange('cars',-1)">−</button>
+          <div class="step-val" id="cars-val">1</div>
+          <button class="step-btn" onclick="stepChange('cars',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: Household staff -->
+    <div class="ob-panel" id="ob-panel-4">
+      <div class="toggle-list">
+        <div class="toggle-row">
+          <div class="toggle-left"><div class="toggle-icon">🧹</div><div><div class="toggle-label">Housekeeper</div><div class="toggle-sub">Full or part-time cleaning</div></div></div>
+          <div class="tog on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><div class="toggle-icon">👨‍🍳</div><div><div class="toggle-label">Cook / Chef</div><div class="toggle-sub">Meal prep & supplies</div></div></div>
+          <div class="tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><div class="toggle-icon">🚘</div><div><div class="toggle-label">Driver</div><div class="toggle-sub">Transport & errands</div></div></div>
+          <div class="tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><div class="toggle-icon">🌿</div><div><div class="toggle-label">Gardener</div><div class="toggle-sub">Garden tools & supplies</div></div></div>
+          <div class="tog on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><div class="toggle-icon">👶</div><div><div class="toggle-label">Nanny</div><div class="toggle-sub">Childcare coordination</div></div></div>
+          <div class="tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-left"><div class="toggle-icon">🐾</div><div><div class="toggle-label">Pet Caretaker</div><div class="toggle-sub">Walks, grooming, vet trips</div></div></div>
+          <div class="tog" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 5: Dietary restrictions -->
+    <div class="ob-panel" id="ob-panel-5">
+      <div style="font-size:13px;color:var(--mid);margin-bottom:8px;">Any dietary restrictions or allergies?</div>
+      <div class="chip-row" id="diet-chips">
+        <div class="chip" onclick="toggleChip(this)">Gluten-free</div>
+        <div class="chip" onclick="toggleChip(this)">Halal</div>
+        <div class="chip" onclick="toggleChip(this)">Vegan</div>
+        <div class="chip selected" onclick="toggleChip(this)">Vegetarian</div>
+        <div class="chip" onclick="toggleChip(this)">Nut allergy</div>
+        <div class="chip" onclick="toggleChip(this)">Dairy-free</div>
+        <div class="chip" onclick="toggleChip(this)">Shellfish allergy</div>
+        <div class="chip" onclick="toggleChip(this)">Keto</div>
+        <div class="chip" onclick="toggleChip(this)">Diabetic-friendly</div>
+        <div class="chip" onclick="toggleChip(this)">None</div>
+      </div>
+      <div style="font-size:13px;color:var(--mid);margin:20px 0 6px;">Add a note (optional)</div>
+      <input type="text" class="ob-input" placeholder="e.g. One child allergic to nuts…">
+    </div>
+
+    <!-- PANEL 6: Meal style -->
+    <div class="ob-panel" id="ob-panel-6">
+      <div style="font-size:13px;color:var(--mid);margin-bottom:8px;">Pick your favourite meal styles (choose all that apply)</div>
+      <div class="chip-row">
+        <div class="chip selected" onclick="toggleChip(this)">Quick & Easy</div>
+        <div class="chip" onclick="toggleChip(this)">Healthy</div>
+        <div class="chip selected" onclick="toggleChip(this)">Kid-friendly</div>
+        <div class="chip" onclick="toggleChip(this)">Budget meals</div>
+        <div class="chip" onclick="toggleChip(this)">High-protein</div>
+        <div class="chip" onclick="toggleChip(this)">Comfort food</div>
+        <div class="chip" onclick="toggleChip(this)">Mediterranean</div>
+        <div class="chip" onclick="toggleChip(this)">Asian</div>
+        <div class="chip" onclick="toggleChip(this)">Latin / Mexican</div>
+        <div class="chip" onclick="toggleChip(this)">Vegetarian</div>
+        <div class="chip" onclick="toggleChip(this)">Meal-prep friendly</div>
+      </div>
+    </div>
+
+    <!-- PANEL 7: Help priorities -->
+    <div class="ob-panel" id="ob-panel-7">
+      <div style="font-size:13px;color:var(--mid);margin-bottom:8px;">What do you want BrightHouse to help with first?</div>
+      <div class="chip-row">
+        <div class="chip selected" onclick="toggleChip(this)">Meals</div>
+        <div class="chip selected" onclick="toggleChip(this)">Groceries</div>
+        <div class="chip" onclick="toggleChip(this)">Cleaning</div>
+        <div class="chip" onclick="toggleChip(this)">Laundry</div>
+        <div class="chip" onclick="toggleChip(this)">Pets</div>
+        <div class="chip" onclick="toggleChip(this)">Repairs</div>
+        <div class="chip" onclick="toggleChip(this)">Vendors</div>
+        <div class="chip" onclick="toggleChip(this)">Reminders</div>
+        <div class="chip" onclick="toggleChip(this)">Staff coordination</div>
+        <div class="chip" onclick="toggleChip(this)">Supplies tracking</div>
+      </div>
+    </div>
+
+    <!-- PANEL 8: Reminders + stressors -->
+    <div class="ob-panel" id="ob-panel-8">
+      <div style="font-size:13px;color:var(--mid);margin-bottom:8px;">When do you prefer reminders?</div>
+      <div class="option-grid" style="gap:8px;">
+        <div class="option-card selected" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🌅</span><div><div class="opt-label">Morning</div><div class="opt-sub">7 – 9 AM</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+        <div class="option-card" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">☀️</span><div><div class="opt-label">Afternoon</div><div class="opt-sub">12 – 2 PM</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+        <div class="option-card" onclick="selectOpt(this)">
+          <div class="opt-left"><span class="opt-emoji">🌙</span><div><div class="opt-label">Evening</div><div class="opt-sub">6 – 8 PM</div></div></div>
+          <div class="opt-check"><svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2"><polyline points="1,6 4.5,9.5 11,2"/></svg></div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--mid);margin:20px 0 6px;">What are your top 3 household stressors?</div>
+      <input type="text" class="ob-input" placeholder="e.g. Forgetting groceries, staff scheduling…">
+    </div>
+
+  </div><!-- /ob-body -->
+
+  <!-- Sticky bottom nav -->
+  <div class="ob-bottom">
+    <button class="btn-ob-back" id="ob-back-btn" onclick="obBack()" style="opacity:0;pointer-events:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+    </button>
+    <button class="btn-ob-next" id="ob-next-btn" onclick="obNext()">Continue</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN 3 — DASHBOARD
+══════════════════════════════════════ -->
+<div class="screen" id="screen-dashboard">
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="top-bar-row">
+      <div>
+        <div class="greeting-sub">Good morning</div>
+        <div class="greeting-name">Smith Family 🏡</div>
+      </div>
+      <button class="avatar-btn" onclick="void(0)">
+        M
+        <div class="avatar-notif"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Scrollable content -->
+  <div class="scroll-area">
+    <div class="dash-body">
+
+      <!-- Date strip -->
+      <!-- Demo mode toggle (for switching user types in prototype) -->
+      <div style="background:var(--charcoal); border-radius:12px; padding:8px; margin-bottom:14px; display:flex; gap:4px;">
+        <button id="mode-btn-staff" onclick="setUserMode('staff')" style="flex:1; padding:8px 6px; border:none; background:var(--gold); color:white; border-radius:8px; font-family:var(--font-body); font-size:11px; font-weight:600; cursor:pointer;">🏡 With Cleaner</button>
+        <button id="mode-btn-diy" onclick="setUserMode('diy')" style="flex:1; padding:8px 6px; border:none; background:transparent; color:rgba(255,255,255,0.55); border-radius:8px; font-family:var(--font-body); font-size:11px; font-weight:600; cursor:pointer;">🧹 DIY Household</button>
+      </div>
+      <div style="font-size:10px; color:var(--soft); text-align:center; margin:-6px 0 14px; font-style:italic;">Demo · switch household type</div>
+
+      <!-- ═══ ASK BRIA HERO ═══ -->
+      <div class="ask-bria-card">
+        <div class="ask-bria-icon">✦</div>
+        <div class="ask-bria-content">
+          <div class="ask-bria-eyebrow">Hi Sarah ☀️</div>
+          <div class="ask-bria-title">What can Bria help with?</div>
+          <div class="ask-bria-input" onclick="showToast('💬 Bria chat opens here')">
+            <span>Ask Bria anything…</span>
+            <div class="ask-bria-mic">🎙️</div>
+          </div>
+          <div class="ask-bria-suggestions">
+            <div class="bria-chip" onclick="showToast('🍽️ Bria is suggesting dinner ideas…')">🍽️ What's for dinner?</div>
+            <div class="bria-chip" onclick="showToast('🧹 Sunday reset plan ready')">🧹 Plan Sunday reset</div>
+            <div class="bria-chip" onclick="openAssign('Send Maria weekly instructions', null)">📨 Send Maria instructions</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today at a glance -->
+      <div class="glance-row">
+        <div class="glance-stat" onclick="showScreen('screen-tasks')">
+          <div class="glance-icon" style="background:#FEF3E2;">📋</div>
+          <div>
+            <div class="glance-num">5</div>
+            <div class="glance-lbl">Tasks</div>
+          </div>
+        </div>
+        <div class="glance-stat" onclick="showScreen('screen-supplies')">
+          <div class="glance-icon" style="background:var(--red-soft);">⚠️</div>
+          <div>
+            <div class="glance-num">3</div>
+            <div class="glance-lbl">Low supplies</div>
+          </div>
+        </div>
+        <div class="glance-stat">
+          <div class="glance-icon" style="background:var(--blue-soft);">🔔</div>
+          <div>
+            <div class="glance-num">2</div>
+            <div class="glance-lbl">Reminders</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tonight's dinner — softened one-liner card -->
+      <div class="dinner-card" onclick="showScreen('screen-meals')">
+        <div class="dinner-emoji">🍽️</div>
+        <div class="dinner-content">
+          <div class="dinner-eyebrow">Tonight's dinner</div>
+          <div class="dinner-name">Grilled Chicken & Veggies</div>
+          <div class="dinner-meta">
+            <span>⏱️ 35 min</span>
+            <span>·</span>
+            <span>🔥 420 cal/serving</span>
+            <span>·</span>
+            <span>👶 Kid-friendly</span>
+          </div>
+        </div>
+        <div class="dinner-arrow">›</div>
+      </div>
+
+      <!-- ═══ CLEANING ROUTINES & COORDINATION ═══ -->
+
+      <!-- VARIANT A: With cleaner/housekeeper -->
+      <div class="task-card cleaning-staff-view" style="background:linear-gradient(135deg, var(--warm-white) 0%, var(--sage-light) 100%); border-color:rgba(107,143,113,0.2);">
+        <div class="task-card-header">
+          <div>
+            <div class="task-card-title">🧹 Cleaning Coordination</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:2px;">Bria helps you prep & coordinate</div>
+          </div>
+          <div style="font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--sage); color:white;">CLEANER MODE</div>
+        </div>
+
+        <!-- Maria's next visit -->
+        <div style="background:var(--warm-white); border-radius:12px; padding:12px 14px; margin:6px 0 12px; display:flex; align-items:center; gap:12px;">
+          <div class="assign-helper-avatar" style="background:#6B8F71;">M</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600; color:var(--charcoal);">Maria — Housekeeper</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:1px;">Next visit · Friday 8 AM</div>
+          </div>
+          <div style="font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--gold-light); color:var(--gold-dark);">in 2 days</div>
+        </div>
+
+        <!-- Prep checklist -->
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--soft); margin:8px 0 6px;">Prep checklist · Bria suggests</div>
+        <div class="supply-item" style="padding:6px 0;">
+          <div class="supply-left"><span class="supply-emoji">🛏️</span><div><div class="supply-name" style="font-size:12px;">Prepare guest room before cleaner arrives</div></div></div>
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.supply-item'))"></div>
+        </div>
+        <div class="supply-item" style="padding:6px 0;">
+          <div class="supply-left"><span class="supply-emoji">📝</span><div><div class="supply-name" style="font-size:12px;">Leave laundry & ironing instructions</div></div></div>
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.supply-item'))"></div>
+        </div>
+        <div class="supply-item" style="padding:6px 0;">
+          <div class="supply-left"><span class="supply-emoji">🧴</span><div><div class="supply-name" style="font-size:12px;">Restock cleaning supplies (2 low)</div></div></div>
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.supply-item'))"></div>
+        </div>
+
+        <div style="display:flex; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <button class="task-action-btn primary" style="flex:1.3;" onclick="openAssign('Friday cleaning prep', this)">Send Instructions</button>
+          <button class="task-action-btn" style="flex:1;" onclick="showToast('📋 Prep checklist opened')">Edit Checklist</button>
+        </div>
+      </div>
+
+      <!-- VARIANT B: DIY household (no cleaner) -->
+      <div class="task-card cleaning-diy-view" style="background:linear-gradient(135deg, var(--warm-white) 0%, var(--blue-soft) 100%); border-color:rgba(58,107,138,0.2); display:none;">
+        <div class="task-card-header">
+          <div>
+            <div class="task-card-title">🧹 Cleaning Routines</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:2px;">Bria keeps your home routines simple</div>
+          </div>
+          <div style="font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--blue); color:white;">DIY MODE</div>
+        </div>
+
+        <!-- Today's quick win -->
+        <div style="background:var(--warm-white); border-radius:12px; padding:12px 14px; margin:6px 0 12px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+            <span style="font-size:18px;">🌅</span>
+            <div style="font-size:13px; font-weight:600; color:var(--charcoal);">Today's quick win</div>
+            <div style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:999px; background:var(--gold-light); color:var(--gold-dark); margin-left:auto;">15 MIN</div>
+          </div>
+          <div style="font-size:12px; color:var(--mid); line-height:1.5;">Sunday reset — wipe counters, run dishwasher, start one load of laundry. That's it.</div>
+        </div>
+
+        <!-- Routines -->
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--soft); margin:8px 0 6px;">Your routines</div>
+        <div class="supply-item" style="padding:6px 0;">
+          <div class="supply-left"><span class="supply-emoji">🔄</span><div><div class="supply-name" style="font-size:12px;">Sunday reset</div><div class="supply-count">Every Sunday · 15 min</div></div></div>
+          <div class="task-tag" style="margin-left:auto; background:var(--sage-light); color:var(--sage);">Active</div>
+        </div>
+        <div class="supply-item" style="padding:6px 0;">
+          <div class="supply-left"><span class="supply-emoji">🧺</span><div><div class="supply-name" style="font-size:12px;">Laundry day</div><div class="supply-count">Tue & Sat</div></div></div>
+          <div class="task-tag" style="margin-left:auto; background:var(--sage-light); color:var(--sage);">Active</div>
+        </div>
+        <div class="supply-item" style="padding:6px 0;">
+          <div class="supply-left"><span class="supply-emoji">❄️</span><div><div class="supply-name" style="font-size:12px;">Clean out fridge</div><div class="supply-count">Monthly · due in 4 days</div></div></div>
+          <div class="task-tag amber" style="margin-left:auto;">Soon</div>
+        </div>
+
+        <!-- Bria tip -->
+        <div style="background:var(--charcoal); border-radius:12px; padding:12px 14px; margin-top:12px; display:flex; gap:10px; align-items:flex-start;">
+          <span style="font-size:18px;">✦</span>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:600; color:var(--gold); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:3px;">Bria's tip</div>
+            <div style="font-size:12px; color:white; line-height:1.5;">Got a red wine spill? Blot, don't rub. Sprinkle salt or baking soda, then dab with cold water. Skip the soap until last.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <button class="task-action-btn primary" style="flex:1.3;" onclick="showToast('🎯 Quick win started')">Start Today's Win</button>
+          <button class="task-action-btn" style="flex:1;" onclick="showToast('📋 Routines opened')">All Routines</button>
+        </div>
+      </div>
+
+      <!-- Tasks one-liner card -->
+      <div class="task-card" style="padding:14px; cursor:pointer;" onclick="showScreen('screen-tasks')">
+        <div class="task-card-header" style="margin-bottom:8px;">
+          <div class="task-card-title">📋 Top Tasks Today</div>
+          <div style="font-size:12px; color:var(--gold-dark); font-weight:500;">View all ›</div>
+        </div>
+        <div class="supply-item" style="padding:6px 0; border-bottom:none;">
+          <div class="supply-left">
+            <span class="supply-emoji" style="font-size:14px;">🛒</span>
+            <div><div class="supply-name" style="font-size:12px;">Buy groceries — dinner ingredients</div></div>
+          </div>
+          <div class="task-tag red" style="margin-left:auto">Urgent</div>
+        </div>
+        <div class="supply-item" style="padding:6px 0; border-bottom:none;">
+          <div class="supply-left">
+            <span class="supply-emoji" style="font-size:14px;">🐾</span>
+            <div><div class="supply-name" style="font-size:12px;">Restock dog food — Buddy</div></div>
+          </div>
+          <div class="task-tag amber" style="margin-left:auto">Pets</div>
+        </div>
+      </div>
+
+      <!-- Smart reminder + Vendor one-liners -->
+      <div class="task-card" style="padding:14px;">
+        <div class="task-card-header" style="margin-bottom:10px;">
+          <div class="task-card-title">🔔 Smart Reminders</div>
+          <div style="font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--gold-light); color:var(--gold-dark);">Premium</div>
+        </div>
+        <div class="supply-item" style="padding:7px 0;">
+          <div class="supply-left">
+            <span class="supply-emoji">❄️</span>
+            <div><div class="supply-name" style="font-size:12px;">AC Filter Replacement</div><div class="supply-count">Due this week</div></div>
+          </div>
+          <div class="task-tag red" style="margin-left:auto">Overdue</div>
+        </div>
+        <div class="supply-item" style="padding:7px 0;">
+          <div class="supply-left">
+            <span class="supply-emoji">📅</span>
+            <div><div class="supply-name" style="font-size:12px;">Home insurance renewal</div><div class="supply-count">In 45 days</div></div>
+          </div>
+          <div class="task-tag amber" style="margin-left:auto">Upcoming</div>
+        </div>
+        <div class="supply-item" style="padding:7px 0; border-bottom:none;">
+          <div class="supply-left">
+            <span class="supply-emoji">🗑️</span>
+            <div><div class="supply-name" style="font-size:12px;">Trash pickup tomorrow</div><div class="supply-count">Set bins out tonight</div></div>
+          </div>
+          <div class="task-tag" style="margin-left:auto; background:var(--blue-soft); color:var(--blue);">Tomorrow</div>
+        </div>
+      </div>
+
+      <!-- Plan Status card -->
+      <div class="task-card" style="background:linear-gradient(135deg, var(--cream) 0%, var(--gold-light) 100%); border-color:rgba(200,153,74,0.25); padding:16px;">
+        <div class="task-card-header" style="margin-bottom:10px;">
+          <div class="task-card-title">⭐ Current Plan: <span style="color:var(--gold-dark)">Free</span></div>
+          <div style="font-size:11px; color:var(--mid);">App plan</div>
+        </div>
+        <div style="display:flex; gap:14px; margin-bottom:14px;">
+          <div style="flex:1;">
+            <div style="font-size:10px; color:var(--mid); margin-bottom:3px;">Tasks</div>
+            <div style="font-family:var(--font-display); font-size:18px; color:var(--charcoal); line-height:1;"><b>7</b><span style="color:var(--mid); font-size:13px;">/10</span></div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:10px; color:var(--mid); margin-bottom:3px;">Reminders</div>
+            <div style="font-family:var(--font-display); font-size:18px; color:var(--charcoal); line-height:1;"><b>3</b><span style="color:var(--mid); font-size:13px;">/5</span></div>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:10px; color:var(--mid); margin-bottom:3px;">Vault</div>
+            <div style="font-family:var(--font-display); font-size:18px; color:var(--charcoal); line-height:1;"><b>4</b><span style="color:var(--mid); font-size:13px;">/5</span></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="task-action-btn primary" style="flex:1; padding:10px;" onclick="showScreen('screen-plans')">Upgrade to Premium</button>
+          <button class="task-action-btn" style="flex:1; padding:10px;" onclick="showScreen('screen-concierge')">✦ Concierge</button>
+        </div>
+        <div style="font-size:10px; color:var(--mid); text-align:center; margin-top:8px; font-style:italic;">Concierge is separate from your app plan</div>
+      </div>
+
+    </div><!-- /dash-body -->
+  </div><!-- /scroll-area -->
+
+  <!-- FAB: Ask BrightHouse -->
+  <button class="fab" title="Ask BrightHouse">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN — TASKS (full screen)
+══════════════════════════════════════ -->
+<div class="screen" id="screen-tasks">
+
+  <div class="inner-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:var(--mid)">Dashboard</div>
+    </div>
+    <div class="inner-title">Tasks</div>
+    <div class="inner-sub">Today, this week, and what's coming up</div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="padding:14px 20px 6px; background:var(--warm-white); border-bottom:1px solid var(--border);">
+    <div style="display:flex; gap:6px; overflow-x:auto; scrollbar-width:none;">
+      <div class="chip selected" onclick="filterChip(this)" style="cursor:pointer;">All <span style="opacity:0.6; margin-left:3px;">8</span></div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Today <span style="opacity:0.6; margin-left:3px;">3</span></div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">This week <span style="opacity:0.6; margin-left:3px;">5</span></div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Assigned</div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Done</div>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+    <div style="padding:20px;">
+
+      <!-- Today section -->
+      <div class="section-label">Today · Sunday</div>
+      <div class="task-card">
+        <div class="task-item done">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Pay condo dues (May)</div>
+          <div class="task-tag">Done</div>
+        </div>
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Buy groceries — dinner ingredients</div>
+          <div class="task-tag red">Urgent</div>
+          <div style="width:100%; padding-left:32px;">
+            <button class="assign-btn" onclick="openAssign('Buy groceries — dinner ingredients', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+          </div>
+        </div>
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Restock dog food — Buddy</div>
+          <div class="task-tag amber">Pets</div>
+          <div style="width:100%; padding-left:32px;">
+            <button class="assign-btn" onclick="openAssign('Restock dog food — Buddy', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- This week section -->
+      <div class="section-label" style="margin-top:18px;">This Week</div>
+      <div class="task-card">
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Schedule AC cleaning</div>
+          <div class="task-tag blue">Vendor</div>
+          <div style="width:100%; padding-left:32px; display:flex; justify-content:space-between; align-items:center;">
+            <button class="assign-btn" onclick="openAssign('Schedule AC cleaning', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+            <span style="font-size:11px; color:var(--soft);">Due Wed</span>
+          </div>
+        </div>
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Pick up dry cleaning</div>
+          <div class="task-tag">Errand</div>
+          <div style="width:100%; padding-left:32px; display:flex; justify-content:space-between; align-items:center;">
+            <button class="assign-btn" onclick="openAssign('Pick up dry cleaning', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+            <span style="font-size:11px; color:var(--soft);">Due Thu</span>
+          </div>
+        </div>
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Buddy's grooming appointment</div>
+          <div class="task-tag amber">Pets</div>
+          <!-- Rich assignment status block -->
+          <div class="assigned-detail">
+            <div class="assigned-row"><span class="lbl">Assigned to</span><b>Tony</b> · Gardener</div>
+            <div class="assigned-row"><span class="lbl">Sent by</span>💬 Text message</div>
+            <div class="assigned-row"><span class="lbl">Due</span>Friday, 10:00 AM</div>
+            <div class="assigned-row"><span class="lbl">Status</span><span class="status-pill received">Received</span></div>
+            <div class="assigned-row"><span class="lbl">Follow-up</span>Friday, 3:00 PM 🔔</div>
+            <div class="task-actions">
+              <button class="task-action-btn primary" onclick="showToast('✓ Task marked done')">Mark Done</button>
+              <button class="task-action-btn" onclick="showToast('🔔 Reminder sent to Tony')">Send Reminder</button>
+              <button class="task-action-btn" onclick="showToast('✏️ Editing instructions')">Edit Instructions</button>
+              <button class="task-action-btn" onclick="openAssign('Buddy grooming', this)">Reassign</button>
+            </div>
+          </div>
+        </div>
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Deep clean kitchen</div>
+          <div class="task-tag">Cleaning</div>
+          <!-- Rich assignment status block -->
+          <div class="assigned-detail">
+            <div class="assigned-row"><span class="lbl">Assigned to</span><b>Maria</b> · Housekeeper</div>
+            <div class="assigned-row"><span class="lbl">Sent by</span>✉️ Email</div>
+            <div class="assigned-row"><span class="lbl">Due</span>Friday, 8:00 AM</div>
+            <div class="assigned-row"><span class="lbl">Status</span><span class="status-pill sent">Sent</span></div>
+            <div class="assigned-row"><span class="lbl">Follow-up</span>Friday, 2:00 PM 🔔</div>
+            <div class="task-actions">
+              <button class="task-action-btn primary" onclick="showToast('✓ Task marked done')">Mark Done</button>
+              <button class="task-action-btn" onclick="showToast('🔔 Reminder sent to Maria')">Send Reminder</button>
+              <button class="task-action-btn" onclick="showToast('✏️ Editing instructions')">Edit Instructions</button>
+              <button class="task-action-btn" onclick="openAssign('Deep clean kitchen', this)">Reassign</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming -->
+      <div class="section-label" style="margin-top:18px;">Upcoming</div>
+      <div class="task-card">
+        <div class="task-item" style="flex-wrap:wrap; gap:6px;">
+          <div class="task-checkbox" onclick="toggleTask(this.closest('.task-item'))"></div>
+          <div class="task-text" style="flex:1;">Renew car registration</div>
+          <div class="task-tag blue">Admin</div>
+          <div style="width:100%; padding-left:32px; display:flex; justify-content:space-between; align-items:center;">
+            <button class="assign-btn" onclick="openAssign('Renew car registration', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+            <span style="font-size:11px; color:var(--soft);">Jun 15</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary outline" style="margin-top:8px;" onclick="showToast('+ New task')">+ Add a Task</button>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item active" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN — SUPPLIES (full screen)
+══════════════════════════════════════ -->
+<div class="screen" id="screen-supplies">
+
+  <div class="inner-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:var(--mid)">Dashboard</div>
+    </div>
+    <div class="inner-title">Supplies</div>
+    <div class="inner-sub">What's running low and what to restock</div>
+  </div>
+
+  <!-- Category tabs -->
+  <div style="padding:14px 20px 6px; background:var(--warm-white); border-bottom:1px solid var(--border);">
+    <div style="display:flex; gap:6px; overflow-x:auto; scrollbar-width:none;">
+      <div class="chip selected" onclick="filterChip(this)" style="cursor:pointer;">All</div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Kitchen</div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Bathroom</div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Cleaning</div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Pets</div>
+      <div class="chip" onclick="filterChip(this)" style="cursor:pointer;">Pantry</div>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+    <div style="padding:20px;">
+
+      <!-- Summary card -->
+      <div class="hero-card" style="margin-bottom:18px;">
+        <div class="hero-card-label">📦 Restock Summary</div>
+        <div class="hero-card-title" style="font-size:18px;">3 items low · 1 critical</div>
+        <div class="hero-card-sub">Estimated restock budget · ₱1,240</div>
+        <button class="btn-primary gold" style="margin-top:14px;" onclick="openAssign('Restock all low supplies (3 items)', null)">Restock All Low Items</button>
+      </div>
+
+      <!-- Running low -->
+      <div class="section-label">Running Low</div>
+      <div class="task-card">
+        <div class="supply-item" style="flex-wrap:wrap; gap:4px;">
+          <div class="supply-left" style="flex:1;">
+            <span class="supply-emoji">🧻</span>
+            <div><div class="supply-name">Toilet Paper</div><div class="supply-count">2 rolls left · Bathroom</div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="supply-bar-wrap"><div class="supply-bar low" style="width:15%"></div></div>
+            <button class="assign-btn" onclick="openAssign('Restock Toilet Paper', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+          </div>
+        </div>
+        <div class="supply-item" style="flex-wrap:wrap; gap:4px;">
+          <div class="supply-left" style="flex:1;">
+            <span class="supply-emoji">🧴</span>
+            <div><div class="supply-name">Dish Soap</div><div class="supply-count">Almost empty · Kitchen</div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="supply-bar-wrap"><div class="supply-bar low" style="width:10%"></div></div>
+            <button class="assign-btn" onclick="openAssign('Restock Dish Soap', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+          </div>
+        </div>
+        <div class="supply-item" style="flex-wrap:wrap; gap:4px;">
+          <div class="supply-left" style="flex:1;">
+            <span class="supply-emoji">🐾</span>
+            <div><div class="supply-name">Dog Food</div><div class="supply-count">~3 days left · Pets</div></div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="supply-bar-wrap"><div class="supply-bar warn" style="width:25%"></div></div>
+            <button class="assign-btn" onclick="openAssign('Restock Dog Food', this)">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              Assign
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Well stocked -->
+      <div class="section-label" style="margin-top:18px;">Well Stocked</div>
+      <div class="task-card">
+        <div class="supply-item">
+          <div class="supply-left">
+            <span class="supply-emoji">🧂</span>
+            <div><div class="supply-name">Cooking Oil</div><div class="supply-count">2 bottles · Kitchen</div></div>
+          </div>
+          <div class="supply-bar-wrap"><div class="supply-bar" style="width:85%"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-left">
+            <span class="supply-emoji">🍚</span>
+            <div><div class="supply-name">Rice</div><div class="supply-count">10kg sack · Pantry</div></div>
+          </div>
+          <div class="supply-bar-wrap"><div class="supply-bar" style="width:90%"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-left">
+            <span class="supply-emoji">🧼</span>
+            <div><div class="supply-name">Laundry Detergent</div><div class="supply-count">Plenty · Cleaning</div></div>
+          </div>
+          <div class="supply-bar-wrap"><div class="supply-bar" style="width:75%"></div></div>
+        </div>
+        <div class="supply-item">
+          <div class="supply-left">
+            <span class="supply-emoji">🧴</span>
+            <div><div class="supply-name">Shampoo</div><div class="supply-count">2 bottles · Bathroom</div></div>
+          </div>
+          <div class="supply-bar-wrap"><div class="supply-bar" style="width:70%"></div></div>
+        </div>
+      </div>
+
+      <button class="btn-primary outline" style="margin-top:8px;" onclick="showToast('+ New supply')">+ Add a Supply Item</button>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN — MEAL PLANNING
+══════════════════════════════════════ -->
+<div class="screen" id="screen-meals">
+
+  <div class="inner-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:var(--mid)">Dashboard</div>
+    </div>
+    <div class="inner-title">What are we eating today?</div>
+    <div class="inner-sub">AI meal planning · pantry-aware suggestions</div>
+  </div>
+
+  <div class="scroll-area">
+    <div class="meal-body">
+
+      <!-- ═══ COOK WHAT I HAVE (AI feature) ═══ -->
+      <div class="section-label">✦ AI feature</div>
+      <div class="cwih-card" onclick="openCookWhatIHave()">
+        <div class="cwih-badge">PREMIUM</div>
+        <div class="cwih-icon">🥘</div>
+        <div class="cwih-title">Cook What I Have</div>
+        <div class="cwih-desc">Tell BrightHouse what's in your fridge or pantry and get instant meal ideas.</div>
+        <div class="cwih-tag-row">
+          <div class="cwih-tag">📸 Scan fridge</div>
+          <div class="cwih-tag">⚡ Quick ideas</div>
+          <div class="cwih-tag">🛒 Auto grocery</div>
+        </div>
+        <button class="btn-primary gold" style="margin-top:14px; pointer-events:none;">Try It Now →</button>
+      </div>
+
+      <!-- Quick-pick meal options -->
+      <div class="section-label" style="margin-top:24px;">Pick tonight's dinner</div>
+      <div class="meal-options">
+        <!-- Featured meal with full nutrition details -->
+        <div class="meal-opt-card featured" style="flex-direction:column; align-items:stretch; padding:18px;">
+          <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+            <span class="meal-emoji">🍲</span>
+            <div style="flex:1;">
+              <div class="meal-opt-name">Grilled Chicken & Veggies</div>
+              <div class="meal-opt-desc">Sheet-pan dinner · ✦ AI suggested</div>
+            </div>
+            <div class="meal-time-badge">35 min</div>
+          </div>
+
+          <!-- Nutrition row -->
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; padding:12px; background:rgba(255,255,255,0.07); border-radius:12px; margin-bottom:12px;">
+            <div style="text-align:center;">
+              <div style="font-family:var(--font-display); font-size:18px; color:white; line-height:1;">420</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.05em; margin-top:3px;">cal</div>
+            </div>
+            <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1);">
+              <div style="font-family:var(--font-display); font-size:18px; color:white; line-height:1;">42<span style="font-size:11px; color:rgba(255,255,255,0.55);">g</span></div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.05em; margin-top:3px;">protein</div>
+            </div>
+            <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1);">
+              <div style="font-family:var(--font-display); font-size:18px; color:white; line-height:1;">28<span style="font-size:11px; color:rgba(255,255,255,0.55);">g</span></div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.05em; margin-top:3px;">carbs</div>
+            </div>
+            <div style="text-align:center; border-left:1px solid rgba(255,255,255,0.1);">
+              <div style="font-family:var(--font-display); font-size:18px; color:white; line-height:1;">14<span style="font-size:11px; color:rgba(255,255,255,0.55);">g</span></div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:0.05em; margin-top:3px;">fat</div>
+            </div>
+          </div>
+
+          <!-- Sub-meta -->
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;">
+            <div style="font-size:10px; padding:3px 9px; border-radius:999px; background:rgba(200,153,74,0.25); color:var(--gold); border:1px solid rgba(200,153,74,0.4);">🍽️ Serves 4</div>
+            <div style="font-size:10px; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.85);">👶 Kid-friendly</div>
+            <div style="font-size:10px; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.85);">🥬 Veggie-rich</div>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button class="task-action-btn" style="flex:1; background:rgba(255,255,255,0.1); color:white; border-color:rgba(255,255,255,0.2);" onclick="event.stopPropagation(); showToast('📖 Recipe opened')">View Recipe</button>
+            <button class="task-action-btn" style="flex:1; background:var(--gold); color:white; border-color:var(--gold);" onclick="event.stopPropagation(); showToast('✓ Set as tonight\'s dinner')">Cook Tonight</button>
+          </div>
+        </div>
+        <div class="meal-opt-card">
+          <div class="meal-opt-left">
+            <span class="meal-emoji">🥗</span>
+            <div>
+              <div class="meal-opt-name">Healthy Option</div>
+              <div class="meal-opt-desc">Salmon rice bowl</div>
+            </div>
+          </div>
+          <div class="meal-time-badge">30 min</div>
+        </div>
+        <div class="meal-opt-card">
+          <div class="meal-opt-left">
+            <span class="meal-emoji">🍳</span>
+            <div>
+              <div class="meal-opt-name">Quick Dinner</div>
+              <div class="meal-opt-desc">Pasta with turkey meatballs</div>
+            </div>
+          </div>
+          <div class="meal-time-badge">15 min</div>
+        </div>
+        <div class="meal-opt-card">
+          <div class="meal-opt-left">
+            <span class="meal-emoji">💸</span>
+            <div>
+              <div class="meal-opt-name">Budget Meal</div>
+              <div class="meal-opt-desc">Veggie stir-fry with rice</div>
+            </div>
+          </div>
+          <div class="meal-time-badge">20 min</div>
+        </div>
+      </div>
+
+      <!-- Weekly preview -->
+      <div class="section-label">This week's menu</div>
+      <div class="week-strip">
+        <div class="week-day">
+          <div class="week-day-label">MON</div>
+          <div class="week-day-pill">Tacos</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">TUE</div>
+          <div class="week-day-pill">Salmon</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">WED</div>
+          <div class="week-day-pill">Pasta</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">THU</div>
+          <div class="week-day-pill">Stir-fry</div>
+        </div>
+        <div class="week-day today">
+          <div class="week-day-label">SUN</div>
+          <div class="week-day-pill">Chicken ✦</div>
+        </div>
+      </div>
+
+      <!-- Grocery list preview -->
+      <div class="section-label">Auto-generated grocery list</div>
+      <div class="card" style="padding:0 16px;">
+        <div class="grocery-list">
+          <div class="grocery-item">
+            <div class="grocery-left"><span class="grocery-emoji">🥦</span> Broccoli (1 head)</div>
+            <div class="grocery-needed">Missing</div>
+          </div>
+          <div class="grocery-item">
+            <div class="grocery-left"><span class="grocery-emoji">🫑</span> Bell peppers (2)</div>
+            <div class="grocery-needed">Missing</div>
+          </div>
+          <div class="grocery-item">
+            <div class="grocery-left"><span class="grocery-emoji">🧄</span> Garlic (1 head)</div>
+            <div class="grocery-check-empty"></div>
+          </div>
+          <div class="grocery-item">
+            <div class="grocery-left"><span class="grocery-emoji">🧅</span> Yellow onion ×2</div>
+            <div class="grocery-check-empty"></div>
+          </div>
+          <div class="grocery-item">
+            <div class="grocery-left"><span class="grocery-emoji">🌾</span> Brown rice</div>
+            <div class="grocery-check-empty"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="margin-bottom:12px;" onclick="showToast('Grocery list generated')">Generate Grocery List</button>
+      <button class="btn-primary gold" style="margin-bottom:12px;" onclick="showToast('Saved to your weekly menu')">Save to Weekly Menu</button>
+      <button class="btn-primary outline" onclick="showToast('Generating a new suggestion…')">Suggest a Different Meal</button>
+
+      <!-- AI helper copy -->
+      <div style="background:var(--cream); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-top:18px; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:16px;">✦</span>
+        <div style="font-size:12px; color:var(--mid); line-height:1.6;">BrightHouse can suggest meals based on your schedule, preferences, pantry notes, and grocery list.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item active" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN 5 — VENDORS & CONCIERGE
+══════════════════════════════════════ -->
+<div class="screen" id="screen-vendors">
+
+  <div class="inner-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:var(--mid)">Dashboard</div>
+    </div>
+    <div class="inner-title">Vendors & Concierge</div>
+    <div class="inner-sub">Coordinate help for your home</div>
+  </div>
+
+  <div class="scroll-area">
+    <div class="vendor-body">
+
+      <!-- Concierge banner -->
+      <div class="concierge-banner">
+        <div class="concierge-eyebrow">BrightHouse Concierge · Human Help</div>
+        <div class="concierge-title">Need a real person to help?</div>
+        <div class="concierge-desc">BrightHouse will review your request and help coordinate the next step. Separate from your app plan — priced per request.</div>
+        <div class="concierge-phase-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+          Phase 1 · Planning & Coordination
+        </div>
+        <button class="btn-primary gold" onclick="showScreen('screen-concierge')">Request Concierge Help</button>
+      </div>
+
+      <!-- Future feature label -->
+      <div class="future-label">
+        <span style="font-size:16px;">⭐</span>
+        <div class="future-label-text">Coming soon: Preferred Vendor Partners — vetted professionals, direct booking.</div>
+      </div>
+
+      <!-- Vendor list -->
+      <div class="section-label">Your vendor contacts</div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--blue-soft)">❄️</div>
+        <div>
+          <div class="vendor-name">AC / HVAC Service</div>
+          <div class="vendor-contact">CoolBreeze Tech · +63 917 555 0101</div>
+        </div>
+        <div class="vendor-status due">Due now</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--sage-light)">🧹</div>
+        <div>
+          <div class="vendor-name">Cleaner — Maria</div>
+          <div class="vendor-contact">Every Friday · 8:00 AM</div>
+        </div>
+        <div class="vendor-status sched">Friday</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:#FEF3E2">🔧</div>
+        <div>
+          <div class="vendor-name">Handyman — Ben</div>
+          <div class="vendor-contact">+63 918 234 5678</div>
+        </div>
+        <div class="vendor-status active">On call</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--red-soft)">🚿</div>
+        <div>
+          <div class="vendor-name">Plumber</div>
+          <div class="vendor-contact">Not yet assigned</div>
+        </div>
+        <div class="vendor-status future">Add</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--gold-light)">🐾</div>
+        <div>
+          <div class="vendor-name">Dog Groomer — PawSpa</div>
+          <div class="vendor-contact">Buddy's next visit: June 3</div>
+        </div>
+        <div class="vendor-status sched">June 3</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--sage-light)">🌿</div>
+        <div>
+          <div class="vendor-name">Gardener — Tony</div>
+          <div class="vendor-contact">Every 2 weeks · Tuesdays</div>
+        </div>
+        <div class="vendor-status active">Active</div>
+      </div>
+
+      <button class="btn-primary outline" style="margin-top:4px;">+ Add a Vendor</button>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN — HOUSEHOLD VAULT
+══════════════════════════════════════ -->
+<div class="screen" id="screen-vault">
+
+  <div class="inner-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:var(--mid)">Dashboard</div>
+    </div>
+    <div class="inner-title">Household Vault</div>
+    <div class="inner-sub">Keep receipts, warranties, recipes, vendor cards, manuals, and household files organized in one place.</div>
+  </div>
+
+  <div class="scroll-area">
+    <div style="padding:20px;">
+
+      <!-- Free plan limit banner -->
+      <div style="background:var(--gold-light); border:1px solid rgba(200,153,74,0.3); border-radius:var(--radius); padding:14px 16px; margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-size:12px; font-weight:600; color:var(--gold-dark);">Free App Plan · 4 of 5 uploads used</div>
+          <div onclick="showScreen('screen-plans')" style="font-size:11px; color:var(--gold-dark); font-weight:600; cursor:pointer; text-decoration:underline;">Upgrade</div>
+        </div>
+        <div class="supply-bar-wrap" style="width:100%; height:6px;"><div class="supply-bar low" style="width:80%"></div></div>
+        <div style="font-size:11px; color:var(--mid); margin-top:8px; line-height:1.5;">Premium includes expanded Vault storage, AI extraction, smart reminders, and document-linked maintenance alerts.</div>
+      </div>
+
+      <!-- Upload actions -->
+      <div class="section-label">Add to Vault</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px;">
+        <div class="feature-card" style="flex-direction:column; padding:18px 12px; text-align:center; gap:8px;" onclick="showToast('📸 Opening camera…')">
+          <span style="font-size:24px;">📸</span>
+          <span class="feat-label">Scan Document</span>
+        </div>
+        <div class="feature-card" style="flex-direction:column; padding:18px 12px; text-align:center; gap:8px;" onclick="showToast('📤 Opening file picker…')">
+          <span style="font-size:24px;">📤</span>
+          <span class="feat-label">Upload File</span>
+        </div>
+        <div class="feature-card" style="flex-direction:column; padding:18px 12px; text-align:center; gap:8px;" onclick="showToast('🖼️ Choose photo')">
+          <span style="font-size:24px;">🖼️</span>
+          <span class="feat-label">Add Photo</span>
+        </div>
+        <div class="feature-card" style="flex-direction:column; padding:18px 12px; text-align:center; gap:8px;" onclick="showToast('✏️ Add manually')">
+          <span style="font-size:24px;">✏️</span>
+          <span class="feat-label">Add Manually</span>
+        </div>
+      </div>
+
+      <!-- AI feature copy -->
+      <div style="background:var(--charcoal); border-radius:var(--radius); padding:16px; margin-bottom:18px; color:white; position:relative; overflow:hidden;">
+        <div style="position:absolute; top:-30px; right:-30px; width:100px; height:100px; background:radial-gradient(circle, var(--gold) 0%, transparent 70%); opacity:0.3;"></div>
+        <div style="font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); margin-bottom:6px;">✦ AI assistant</div>
+        <div style="font-family:var(--font-display); font-size:16px; margin-bottom:6px;">Let BrightHouse organize for you</div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.6); line-height:1.6;">BrightHouse can help organize files, extract key details, and remind you when something needs attention — receipt totals, warranty dates, vendor numbers, recipe ingredients, and more.</div>
+      </div>
+
+      <!-- Categories -->
+      <div class="section-label">Browse by category</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px;">
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🧾</span><span class="feat-label">Receipts</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">📇</span><span class="feat-label">Vendor Cards</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🍝</span><span class="feat-label">Recipes</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">📄</span><span class="feat-label">Warranties</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">📋</span><span class="feat-label">Manuals</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🔧</span><span class="feat-label">Repairs</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🛡️</span><span class="feat-label">Insurance</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🧽</span><span class="feat-label">Cleaning Info</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🐾</span><span class="feat-label">Pet Records</span></div>
+        <div class="feature-card" onclick="filterChip(this)"><span class="feat-emoji">🎒</span><span class="feat-label">School/Home</span></div>
+      </div>
+
+      <!-- Saved items -->
+      <div class="section-label">Recently saved</div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--sage-light)">📄</div>
+        <div style="flex:1;">
+          <div class="vendor-name">Dishwasher Warranty</div>
+          <div class="vendor-contact">Expires June 2027 · AI-extracted</div>
+        </div>
+        <div class="vendor-status active">Saved</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--blue-soft)">📇</div>
+        <div style="flex:1;">
+          <div class="vendor-name">Plumber Business Card</div>
+          <div class="vendor-contact">Saved under Vendors · +1 (555) 234-1108</div>
+        </div>
+        <div class="vendor-status sched">Vendors</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:#FEF3E2">🧾</div>
+        <div style="flex:1;">
+          <div class="vendor-name">Grocery Receipt</div>
+          <div class="vendor-contact">$127.40 · Whole Foods · Added to Expenses</div>
+        </div>
+        <div class="vendor-status future">Expenses</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--red-soft)">🍝</div>
+        <div style="flex:1;">
+          <div class="vendor-name">Pasta Recipe</div>
+          <div class="vendor-contact">Saved under Meals · 8 ingredients extracted</div>
+        </div>
+        <div class="vendor-status sched">Meals</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--gold-light)">📋</div>
+        <div style="flex:1;">
+          <div class="vendor-name">AC Filter Manual</div>
+          <div class="vendor-contact">Linked to Maintenance · Reminder set</div>
+        </div>
+        <div class="vendor-status active">Linked</div>
+      </div>
+
+      <div class="vendor-card">
+        <div class="vendor-icon" style="background:var(--sage-light)">🛡️</div>
+        <div style="flex:1;">
+          <div class="vendor-name">Home Insurance Policy</div>
+          <div class="vendor-contact">Renewal Sept 12, 2026 · Reminder saved</div>
+        </div>
+        <div class="vendor-status sched">Renews</div>
+      </div>
+
+      <button class="btn-primary outline" style="margin-top:8px;" onclick="showToast('+ Upload to Vault')">+ Save to Household Vault</button>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item active" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN — APP PLANS (Free vs Premium)
+══════════════════════════════════════ -->
+<div class="screen" id="screen-plans">
+
+  <div class="inner-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:var(--mid)">Dashboard</div>
+    </div>
+    <div class="inner-title">App Plans</div>
+    <div class="inner-sub">Free is for basic tracking. Premium is for smarter AI planning.</div>
+  </div>
+
+  <div class="scroll-area">
+    <div style="padding:20px;">
+
+      <!-- Important clarifier -->
+      <div style="background:var(--blue-soft); border:1px solid rgba(58,107,138,0.2); border-radius:var(--radius); padding:13px 16px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:16px; line-height:1.3;">ℹ️</span>
+        <div style="font-size:12px; color:var(--blue); line-height:1.6;">These plans cover <b>app features only</b>. BrightHouse Concierge (human help) is separate and priced per request.</div>
+      </div>
+
+      <!-- Free Plan -->
+      <div class="task-card" style="padding:0; overflow:hidden;">
+        <div style="padding:20px 18px; border-bottom:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+            <div>
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--mid); margin-bottom:4px;">Free App Plan</div>
+              <div style="font-family:var(--font-display); font-size:22px; color:var(--charcoal);">Tracking essentials</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--font-display); font-size:28px; color:var(--charcoal); line-height:1;">$0</div>
+              <div style="font-size:11px; color:var(--mid); margin-top:2px;">forever</div>
+            </div>
+          </div>
+          <div style="display:inline-block; padding:4px 10px; border-radius:999px; background:var(--sage-light); color:var(--sage); font-size:10px; font-weight:700; margin-top:6px;">✓ YOUR CURRENT PLAN</div>
+        </div>
+        <div style="padding:18px;">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Basic household dashboard</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Up to 10 active tasks</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Up to 5 reminders</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Manual grocery / supply list</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Up to 5 vendor contacts</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Up to 5 Household Vault uploads</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--sage);">✓</span><span>Limited AI preview</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Premium Plan -->
+      <div style="background:var(--charcoal); border-radius:var(--radius); margin-top:14px; overflow:hidden; position:relative;">
+        <div style="position:absolute; top:-40px; right:-40px; width:160px; height:160px; background:radial-gradient(circle, var(--gold) 0%, transparent 70%); opacity:0.25;"></div>
+        <div style="padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.1); position:relative;">
+          <div style="display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:999px; background:rgba(200,153,74,0.2); border:1px solid rgba(200,153,74,0.4); font-size:10px; font-weight:700; color:var(--gold); margin-bottom:10px;">★ RECOMMENDED</div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+            <div>
+              <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); margin-bottom:4px;">Premium AI App Plan</div>
+              <div style="font-family:var(--font-display); font-size:22px; color:white;">Smart planning</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--font-display); font-size:28px; color:white; line-height:1;">$9.99</div>
+              <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px;">/month</div>
+            </div>
+          </div>
+          <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:6px;">or <b style="color:white;">$69.99/year</b> · save 41%</div>
+        </div>
+        <div style="padding:18px; color:white;">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>AI household dashboard</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>AI meal planning</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Auto-generated grocery lists</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Smart reminders</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Unlimited tasks & reminders</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Expanded Household Vault</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>AI document extraction</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Warranty & maintenance reminders</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Repair & maintenance suggestions</span></div>
+            <div style="display:flex; gap:10px; align-items:flex-start; font-size:13px;"><span style="color:var(--gold);">★</span><span>Vendor / repair history</span></div>
+          </div>
+          <button class="btn-primary gold" style="margin-top:18px;" onclick="showToast('Premium subscription flow…')">Start 7-day Free Trial</button>
+        </div>
+      </div>
+
+      <!-- Concierge separator -->
+      <div style="margin:24px 0 14px; text-align:center;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--soft);">— OR —</div>
+      </div>
+
+      <!-- Concierge teaser -->
+      <div class="task-card" style="background:var(--cream); border:1.5px solid var(--gold); padding:18px;" onclick="showScreen('screen-concierge')">
+        <div style="display:flex; gap:12px; align-items:flex-start; margin-bottom:10px;">
+          <div style="width:42px; height:42px; border-radius:14px; background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:20px; color:white; flex-shrink:0;">✦</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-display); font-size:17px; color:var(--charcoal); margin-bottom:3px;">BrightHouse Concierge</div>
+            <div style="font-size:12px; color:var(--mid); line-height:1.5;">Human help — separate from your app plan, priced per request.</div>
+          </div>
+          <div style="font-size:20px; color:var(--gold-dark);">›</div>
+        </div>
+        <div style="font-size:11px; color:var(--gold-dark); font-weight:600; margin-top:4px;">Starting at $75 per request →</div>
+      </div>
+
+      <!-- Phase 1 note -->
+      <div style="font-size:11px; color:var(--mid); text-align:center; line-height:1.6; margin-top:20px; padding:0 8px; font-style:italic;">Phase 1 focuses on household planning, reminders, document organization, and coordination support. Full vendor fulfillment and marketplace booking may come later.</div>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item active" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     SCREEN — BRIGHTHOUSE CONCIERGE (Human Help)
+══════════════════════════════════════ -->
+<div class="screen" id="screen-concierge">
+
+  <div class="inner-header" style="background:var(--charcoal); border-bottom:none; padding-bottom:24px;">
+    <div class="back-row">
+      <button class="back-btn" onclick="showScreen('screen-dashboard')" style="border-color:rgba(255,255,255,0.2); color:white;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+      </button>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5)">Back</div>
+    </div>
+    <div style="font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); margin-bottom:6px;">✦ Human Concierge Help</div>
+    <div class="inner-title" style="color:white;">BrightHouse Concierge</div>
+    <div class="inner-sub" style="color:rgba(255,255,255,0.6); margin-top:6px;">Need a real person to help coordinate the next step? BrightHouse Concierge can help organize details, research options, contact vendors, schedule services, prepare checklists, or follow up.</div>
+  </div>
+
+  <div class="scroll-area">
+    <div style="padding:20px;">
+
+      <!-- Important clarifier -->
+      <div style="background:var(--gold-light); border:1px solid rgba(200,153,74,0.3); border-radius:var(--radius); padding:14px 16px; margin-bottom:20px; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:16px;">ℹ️</span>
+        <div style="font-size:12px; color:var(--gold-dark); line-height:1.6;">Concierge is <b>separate from the app plan</b> and priced per request. Phase 1 does not include full fulfillment, guaranteed vendor availability, or marketplace booking.</div>
+      </div>
+
+      <!-- Pricing cards -->
+      <div class="section-label">Pricing</div>
+
+      <div class="task-card" style="padding:18px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+          <div style="font-family:var(--font-display); font-size:17px; color:var(--charcoal);">Intro Concierge Request</div>
+          <div style="font-family:var(--font-display); font-size:20px; color:var(--gold-dark); white-space:nowrap;">$75</div>
+        </div>
+        <div style="font-size:12px; color:var(--mid); line-height:1.6;">Includes up to 45 minutes of remote coordination. Best for first-time requests.</div>
+      </div>
+
+      <div class="task-card" style="padding:18px; margin-bottom:10px; border:1.5px solid var(--gold);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+          <div style="font-family:var(--font-display); font-size:17px; color:var(--charcoal);">Standard Request</div>
+          <div style="font-family:var(--font-display); font-size:20px; color:var(--gold-dark); white-space:nowrap;">from $100</div>
+        </div>
+        <div style="font-size:12px; color:var(--mid); line-height:1.6;">For vendor coordination, household admin, scheduling, sourcing, document organization, or follow-ups.</div>
+      </div>
+
+      <div class="task-card" style="padding:18px; margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+          <div style="font-family:var(--font-display); font-size:17px; color:var(--charcoal);">Monthly Household Support</div>
+          <div style="font-family:var(--font-display); font-size:18px; color:var(--gold-dark); white-space:nowrap;">from $350/mo</div>
+        </div>
+        <div style="font-size:12px; color:var(--mid); line-height:1.6;">For ongoing remote household management support.</div>
+      </div>
+
+      <!-- Request form -->
+      <div class="section-label">Request form</div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px; color:var(--mid); margin-bottom:8px;">What do you need help with?</div>
+        <div class="chip-row" style="margin-top:0;">
+          <div class="chip selected" onclick="toggleChip(this)">Vendor coordination</div>
+          <div class="chip" onclick="toggleChip(this)">Grocery / supply support</div>
+          <div class="chip" onclick="toggleChip(this)">Meal planning help</div>
+          <div class="chip" onclick="toggleChip(this)">Repair follow-up</div>
+          <div class="chip" onclick="toggleChip(this)">Household checklist</div>
+          <div class="chip" onclick="toggleChip(this)">Scheduling</div>
+          <div class="chip" onclick="toggleChip(this)">Document organization</div>
+          <div class="chip" onclick="toggleChip(this)">Other</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px; color:var(--mid); margin-bottom:8px;">How urgent is this?</div>
+        <div class="chip-row" style="margin-top:0;">
+          <div class="chip" onclick="filterChip(this)">Today</div>
+          <div class="chip selected" onclick="filterChip(this)">This week</div>
+          <div class="chip" onclick="filterChip(this)">Flexible</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px; color:var(--mid); margin-bottom:8px;">Do you already have a vendor or contact?</div>
+        <div class="chip-row" style="margin-top:0;">
+          <div class="chip" onclick="filterChip(this)">Yes</div>
+          <div class="chip selected" onclick="filterChip(this)">No</div>
+          <div class="chip" onclick="filterChip(this)">Not sure</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px; color:var(--mid); margin-bottom:8px;">What kind of support do you need?</div>
+        <div class="chip-row" style="margin-top:0;">
+          <div class="chip selected" onclick="toggleChip(this)">Find options</div>
+          <div class="chip" onclick="toggleChip(this)">Coordinate / schedule</div>
+          <div class="chip" onclick="toggleChip(this)">Follow up</div>
+          <div class="chip" onclick="toggleChip(this)">Create a checklist</div>
+          <div class="chip" onclick="toggleChip(this)">Organize documents</div>
+          <div class="chip" onclick="toggleChip(this)">Other</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <div style="font-size:13px; color:var(--mid); margin-bottom:8px;">Notes / details</div>
+        <textarea class="ob-input" rows="4" placeholder="Add any details, preferences, or constraints…" style="resize:vertical; min-height:100px; font-family:var(--font-body);"></textarea>
+      </div>
+
+      <button class="btn-primary gold" onclick="showToast('✦ Request submitted — we will review and coordinate the next step')">Submit Concierge Request</button>
+      <div style="font-size:11px; color:var(--mid); text-align:center; margin-top:12px; line-height:1.6; font-style:italic;">BrightHouse will review your request and help coordinate the next step. You'll receive a confirmation by email or in-app.</div>
+
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setNav(this,'screen-dashboard')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-meals')">
+      <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Meals</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-tasks')">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-vault')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Vault</span>
+    </div>
+    <div class="nav-item" onclick="setNav(this,'screen-plans')">
+      <svg viewBox="0 0 24 24"><polygon points="12,2 15,8.5 22,9.3 17,14 18.2,21 12,17.8 5.8,21 7,14 2,9.3 9,8.5"/></svg>
+      <span>Plans</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     ASSIGN MODAL — inside phone div for correct positioning
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="assign-modal" onclick="closeAssignOnBg(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+
+    <!-- =============== STEP 1: Pick assignee =============== -->
+    <div id="assign-step-1">
+      <div class="modal-header">
+        <div class="modal-task-label">Step 1 of 2 · Assign task</div>
+        <div class="modal-task-name" id="modal-task-name">Buy groceries — dinner ingredients</div>
+      </div>
+      <div class="modal-body">
+
+        <!-- BrightHouse Concierge option -->
+        <div class="modal-section-title">BrightHouse Concierge</div>
+        <div class="assign-ai-card" onclick="pickAssignee('BrightHouse Concierge', 'Human help · paid per request')">
+          <div class="assign-ai-icon">✦</div>
+          <div>
+            <div class="assign-ai-name">BrightHouse Concierge</div>
+            <div class="assign-ai-sub">We'll review your request and help coordinate the next step</div>
+          </div>
+          <div class="assign-ai-arrow">›</div>
+        </div>
+
+        <!-- Household helpers -->
+        <div class="modal-section-title" style="margin-top:6px;">Your household</div>
+        <div class="assign-helper-list">
+          <div class="assign-helper-row" onclick="pickAssignee('Me','Self')">
+            <div class="assign-helper-avatar" style="background:var(--charcoal);">U</div>
+            <div>
+              <div class="assign-helper-name">Me</div>
+              <div class="assign-helper-role">Keep this task for myself</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+          <div class="assign-helper-row" onclick="pickAssignee('Spouse','Partner · +1 (555) 234-1100')">
+            <div class="assign-helper-avatar" style="background:#A8615E;">S</div>
+            <div>
+              <div class="assign-helper-name">Spouse / Partner</div>
+              <div class="assign-helper-role">Sarah Smith · +1 (555) 234-1100</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+          <div class="assign-helper-row" onclick="pickAssignee('Maria','Housekeeper · +1 (555) 412-7788')">
+            <div class="assign-helper-avatar" style="background:#6B8F71;">M</div>
+            <div>
+              <div class="assign-helper-name">Maria</div>
+              <div class="assign-helper-role">Housekeeper · Available Fri</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+          <div class="assign-helper-row" onclick="pickAssignee('Ben','Handyman · +1 (555) 332-4419')">
+            <div class="assign-helper-avatar" style="background:#3A6B8A;">B</div>
+            <div>
+              <div class="assign-helper-name">Ben</div>
+              <div class="assign-helper-role">Handyman · On call</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+          <div class="assign-helper-row" onclick="pickAssignee('Tony','Gardener · +1 (555) 778-1234')">
+            <div class="assign-helper-avatar" style="background:#8B6420;">T</div>
+            <div>
+              <div class="assign-helper-name">Tony</div>
+              <div class="assign-helper-role">Gardener · Every 2 weeks</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+          <div class="assign-helper-row" onclick="pickAssignee('Roel','Driver · +1 (555) 901-2233')">
+            <div class="assign-helper-avatar" style="background:#2C2B27;">R</div>
+            <div>
+              <div class="assign-helper-name">Roel</div>
+              <div class="assign-helper-role">Driver · Transport & errands</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+        </div>
+
+        <!-- Add new contact -->
+        <div class="assign-helper-list" style="margin-top:12px;">
+          <div class="assign-helper-row" onclick="pickAssignee('NEW','')">
+            <div class="assign-helper-avatar" style="background:var(--gold); color:white;">+</div>
+            <div>
+              <div class="assign-helper-name">Add new contact</div>
+              <div class="assign-helper-role">Nanny, dog walker, other helper…</div>
+            </div>
+            <div class="assign-helper-arrow">›</div>
+          </div>
+        </div>
+
+        <div style="font-size:11px; color:var(--mid); text-align:center; margin-top:14px; padding:0 8px; line-height:1.5; font-style:italic;">Phase 1 sends tasks via text, email, share, or copy — no separate helper login required.</div>
+
+      </div>
+    </div>
+
+    <!-- =============== STEP 2: Configure task =============== -->
+    <div id="assign-step-2" style="display:none;">
+      <div class="modal-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="modal-task-label">Step 2 of 2 · Configure</div>
+          <div class="modal-task-name" id="modal-task-name-2">Buy groceries — dinner ingredients</div>
+        </div>
+        <button class="assign-btn" style="font-size:11px;" onclick="backToStep1()">‹ Back</button>
+      </div>
+
+      <div class="modal-body" style="max-height:60vh; overflow-y:auto; padding-bottom:8px;">
+
+        <!-- Assignee summary -->
+        <div style="background:var(--cream); border:1px solid var(--border); border-radius:var(--radius); padding:13px 14px; margin-bottom:18px; display:flex; align-items:center; gap:12px;">
+          <div id="step2-avatar" class="assign-helper-avatar" style="background:#6B8F71;">M</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600; color:var(--charcoal);" id="step2-name">Maria</div>
+            <div style="font-size:11px; color:var(--mid); margin-top:1px;" id="step2-role">Housekeeper · +1 (555) 412-7788</div>
+          </div>
+          <div onclick="backToStep1()" style="font-size:11px; color:var(--gold-dark); font-weight:600; cursor:pointer;">Change</div>
+        </div>
+
+        <!-- Delivery method -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">📤 Delivery method</div>
+          <div class="chip-row" style="margin-top:0;">
+            <div class="chip selected" onclick="filterChip(this)">💬 Text message</div>
+            <div class="chip" onclick="filterChip(this)">✉️ Email</div>
+            <div class="chip" onclick="filterChip(this)">📋 Copy instructions</div>
+            <div class="chip" onclick="filterChip(this)">📝 Save as checklist only</div>
+          </div>
+        </div>
+
+        <!-- Due date -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">📅 Due date & time</div>
+          <div style="display:flex; gap:8px;">
+            <input type="date" class="ob-input" style="margin-top:0; flex:1;" value="2026-05-22">
+            <input type="time" class="ob-input" style="margin-top:0; width:110px;" value="10:00">
+          </div>
+        </div>
+
+        <!-- Notes / instructions -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">📝 Notes / instructions</div>
+          <textarea class="ob-input" rows="3" placeholder="Add details, preferences, or special instructions…" style="margin-top:0; resize:vertical; min-height:80px; font-family:var(--font-body);">Please pick up groceries from the list in the Vault. Items needed for tonight's dinner.</textarea>
+        </div>
+
+        <!-- Attach from Vault -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">📎 Attach from Household Vault <span style="color:var(--mid); font-weight:400;">(optional)</span></div>
+          <div class="chip-row" style="margin-top:0;">
+            <div class="chip" onclick="toggleChip(this)">🧾 Grocery list</div>
+            <div class="chip" onclick="toggleChip(this)">🍝 Pasta recipe</div>
+            <div class="chip" onclick="toggleChip(this)">+ Browse Vault</div>
+          </div>
+        </div>
+
+        <!-- Recurring -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">🔁 Make this recurring <span style="color:var(--mid); font-weight:400;">(optional)</span></div>
+          <div class="chip-row" style="margin-top:0;">
+            <div class="chip selected" onclick="filterChip(this)">One-time</div>
+            <div class="chip" onclick="filterChip(this)">Daily</div>
+            <div class="chip" onclick="filterChip(this)">Weekly</div>
+            <div class="chip" onclick="filterChip(this)">Monthly</div>
+          </div>
+        </div>
+
+        <!-- Follow-up reminder -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">🔔 Follow-up reminder <span style="color:var(--mid); font-weight:400;">(optional)</span></div>
+          <div class="chip-row" style="margin-top:0;">
+            <div class="chip" onclick="filterChip(this)">None</div>
+            <div class="chip selected" onclick="filterChip(this)">Same day · 3 PM</div>
+            <div class="chip" onclick="filterChip(this)">Day after</div>
+            <div class="chip" onclick="filterChip(this)">Custom</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action buttons -->
+      <div style="padding:14px 22px 0; display:flex; gap:8px;">
+        <button class="btn-primary outline" style="flex:1; padding:13px; font-size:13px;" onclick="finalizeAssign(false)">Save Assignment</button>
+        <button class="btn-primary gold" style="flex:1.4; padding:13px; font-size:13px;" onclick="finalizeAssign(true)">Send Task →</button>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /assign-modal -->
+
+
+<!-- ══════════════════════════════════════
+     COOK WHAT I HAVE — modal
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="cwih-modal" onclick="closeCwihOnBg(event)">
+  <div class="modal-sheet" style="max-height:90vh; display:flex; flex-direction:column;">
+    <div class="modal-handle"></div>
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="modal-task-label">✦ AI feature · Premium</div>
+      <div class="modal-task-name">Cook What I Have</div>
+      <div style="font-size:12px; color:var(--mid); margin-top:6px; line-height:1.5;">Tell me what's in your fridge or pantry — I'll suggest meals you can make right now.</div>
+    </div>
+
+    <div class="modal-body" style="overflow-y:auto; flex:1;">
+
+      <!-- ───── INPUT VIEW ───── -->
+      <div id="cwih-input-view">
+
+        <!-- Photo scan option -->
+        <div onclick="cwihScanFridge()" style="background:var(--charcoal); border-radius:var(--radius); padding:14px 16px; margin-bottom:18px; display:flex; align-items:center; gap:12px; cursor:pointer;">
+          <div style="width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,0.10); display:flex; align-items:center; justify-content:center; font-size:20px;">📸</div>
+          <div style="flex:1; color:white;">
+            <div style="font-size:14px; font-weight:600;">Snap a photo of your fridge</div>
+            <div style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:1px;">AI will detect ingredients automatically</div>
+          </div>
+          <div style="color:rgba(255,255,255,0.4); font-size:18px;">›</div>
+        </div>
+
+        <!-- Selected ingredients -->
+        <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">Or pick what you have:</div>
+        <div id="pantry-chips" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px;">
+          <div class="pantry-chip selected" onclick="this.classList.toggle('selected')">🍗 Chicken</div>
+          <div class="pantry-chip selected" onclick="this.classList.toggle('selected')">🍚 Rice</div>
+          <div class="pantry-chip selected" onclick="this.classList.toggle('selected')">🧅 Onion</div>
+          <div class="pantry-chip selected" onclick="this.classList.toggle('selected')">🧄 Garlic</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🥚 Eggs</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🍝 Pasta</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🍅 Tomato</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🥦 Broccoli</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🥬 Spinach</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🧀 Cheese</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🥕 Carrots</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🥔 Potatoes</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🐟 Salmon</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🥩 Ground beef</div>
+          <div class="pantry-chip" onclick="this.classList.toggle('selected')">🫑 Bell peppers</div>
+        </div>
+
+        <!-- Manual entry -->
+        <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">Add anything else:</div>
+        <input type="text" class="ob-input" placeholder="e.g. tofu, soy sauce, leftover rotisserie chicken…" style="margin-top:0; margin-bottom:18px;">
+
+        <!-- Filters -->
+        <div style="font-size:12px; font-weight:600; color:var(--charcoal); margin-bottom:8px;">What kind of meal?</div>
+        <div class="chip-row" style="margin-top:0; margin-bottom:18px;">
+          <div class="chip selected" onclick="filterChip(this)">⚡ Quick (&lt;30 min)</div>
+          <div class="chip" onclick="filterChip(this)">🥗 Healthy</div>
+          <div class="chip" onclick="filterChip(this)">👶 Kid-friendly</div>
+          <div class="chip" onclick="filterChip(this)">🍽️ Comfort</div>
+          <div class="chip" onclick="filterChip(this)">🌱 Vegetarian</div>
+          <div class="chip" onclick="filterChip(this)">🍳 Breakfast</div>
+        </div>
+
+        <!-- Extras -->
+        <div style="background:var(--cream); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--charcoal);"><b>Family of 4</b> · adjust serving size</div>
+            <div style="display:flex; gap:6px;">
+              <div class="step-btn" style="width:28px; height:28px; border:1px solid var(--border-strong); border-radius:50%; font-size:16px;" onclick="adjustServings(-1)">−</div>
+              <div id="cwih-servings" style="width:32px; text-align:center; font-family:var(--font-display); font-size:18px; padding-top:3px;">4</div>
+              <div class="step-btn" style="width:28px; height:28px; border:1px solid var(--border-strong); border-radius:50%; font-size:16px;" onclick="adjustServings(1)">+</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── RESULTS VIEW ───── -->
+      <div id="cwih-results-view" style="display:none;">
+
+        <div style="background:var(--sage-light); border:1px solid rgba(107,143,113,0.3); border-radius:var(--radius); padding:12px 14px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:18px;">✨</span>
+          <div style="font-size:12px; color:var(--sage); line-height:1.5;">Based on your <b>4 ingredients</b>, here are 3 meals you can make tonight. Serves 4.</div>
+        </div>
+
+        <!-- Suggestion 1 -->
+        <div class="suggest-meal">
+          <div class="suggest-meal-head">
+            <div class="suggest-meal-name"><span style="font-size:22px;">🍗</span>Chicken Fried Rice</div>
+            <div class="suggest-time">25 min</div>
+          </div>
+          <div class="suggest-line"><b>✓ You have:</b> Chicken, Rice, Onion, Garlic</div>
+          <div class="suggest-line miss"><b>+ You need:</b> Soy sauce, Frozen peas, Eggs</div>
+          <div class="suggest-actions">
+            <button class="suggest-btn" onclick="showToast('📖 Recipe opened')">View Recipe</button>
+            <button class="suggest-btn" onclick="showToast('🛒 3 items added to grocery list')">Add to Grocery</button>
+            <button class="suggest-btn primary" onclick="showToast('🍽️ Set as tonight\'s dinner')">Cook Tonight</button>
+          </div>
+        </div>
+
+        <!-- Suggestion 2 -->
+        <div class="suggest-meal">
+          <div class="suggest-meal-head">
+            <div class="suggest-meal-name"><span style="font-size:22px;">🍲</span>One-Pot Chicken & Rice</div>
+            <div class="suggest-time">35 min</div>
+          </div>
+          <div class="suggest-line"><b>✓ You have:</b> Chicken, Rice, Onion, Garlic — all of it!</div>
+          <div class="suggest-line" style="color:var(--sage); font-weight:600;">✨ No grocery run needed</div>
+          <div class="suggest-actions">
+            <button class="suggest-btn" onclick="showToast('📖 Recipe opened')">View Recipe</button>
+            <button class="suggest-btn" onclick="showToast('💾 Saved to Vault')">Save Recipe</button>
+            <button class="suggest-btn primary" onclick="showToast('🍽️ Set as tonight\'s dinner')">Cook Tonight</button>
+          </div>
+        </div>
+
+        <!-- Suggestion 3 -->
+        <div class="suggest-meal">
+          <div class="suggest-meal-head">
+            <div class="suggest-meal-name"><span style="font-size:22px;">🍛</span>Chicken Garlic Stir-Fry</div>
+            <div class="suggest-time">20 min</div>
+          </div>
+          <div class="suggest-line"><b>✓ You have:</b> Chicken, Garlic, Onion</div>
+          <div class="suggest-line miss"><b>+ You need:</b> Bell peppers, Soy sauce</div>
+          <div class="suggest-actions">
+            <button class="suggest-btn" onclick="showToast('📖 Recipe opened')">View Recipe</button>
+            <button class="suggest-btn" onclick="showToast('🛒 2 items added to grocery list')">Add to Grocery</button>
+            <button class="suggest-btn primary" onclick="showToast('🍽️ Set as tonight\'s dinner')">Cook Tonight</button>
+          </div>
+        </div>
+
+        <div style="font-size:11px; color:var(--mid); text-align:center; margin-top:14px; line-height:1.6; font-style:italic;">Saved recipes from your Household Vault are prioritized in suggestions.</div>
+      </div>
+
+    </div>
+
+    <!-- Action buttons -->
+    <div style="padding:14px 22px env(safe-area-inset-bottom, 20px); display:flex; gap:8px; border-top:1px solid var(--border); background:var(--warm-white);">
+      <button id="cwih-action-back" class="btn-primary outline" style="display:none; flex:0.6; padding:13px; font-size:13px;" onclick="cwihBackToInput()">‹ Back</button>
+      <button id="cwih-action-main" class="btn-primary gold" style="flex:1; padding:13px; font-size:14px;" onclick="cwihGetSuggestions()">✦ Get Meal Ideas</button>
+    </div>
+  </div>
+</div><!-- /cwih-modal -->
+
+</div><!-- /phone -->
+
+<!-- ============================================================
+     JAVASCRIPT — Navigation + Interactions
+============================================================ -->
+<script>
+// ── User Mode (DIY vs With Cleaner) ────────────────────────
+function setUserMode(mode) {
+  const staffView = document.querySelectorAll('.cleaning-staff-view');
+  const diyView = document.querySelectorAll('.cleaning-diy-view');
+  const btnStaff = document.getElementById('mode-btn-staff');
+  const btnDiy = document.getElementById('mode-btn-diy');
+
+  if (mode === 'staff') {
+    staffView.forEach(el => el.style.display = '');
+    diyView.forEach(el => el.style.display = 'none');
+    btnStaff.style.background = 'var(--gold)';
+    btnStaff.style.color = 'white';
+    btnDiy.style.background = 'transparent';
+    btnDiy.style.color = 'rgba(255,255,255,0.55)';
+  } else {
+    staffView.forEach(el => el.style.display = 'none');
+    diyView.forEach(el => el.style.display = '');
+    btnDiy.style.background = 'var(--gold)';
+    btnDiy.style.color = 'white';
+    btnStaff.style.background = 'transparent';
+    btnStaff.style.color = 'rgba(255,255,255,0.55)';
+  }
+}
+
+// ── Cook What I Have (AI feature) ──────────────────────────
+function openCookWhatIHave() {
+  document.getElementById('cwih-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  cwihBackToInput();
+}
+function closeCwih() {
+  document.getElementById('cwih-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeCwihOnBg(e) {
+  if (e.target === document.getElementById('cwih-modal')) closeCwih();
+}
+function cwihGetSuggestions() {
+  // Switch to results view
+  document.getElementById('cwih-input-view').style.display = 'none';
+  document.getElementById('cwih-results-view').style.display = 'block';
+  document.getElementById('cwih-action-back').style.display = 'block';
+  const mainBtn = document.getElementById('cwih-action-main');
+  mainBtn.textContent = 'Save All Ideas';
+  mainBtn.onclick = function() { showToast('💾 Ideas saved to your meal plan'); closeCwih(); };
+}
+function cwihBackToInput() {
+  document.getElementById('cwih-input-view').style.display = 'block';
+  document.getElementById('cwih-results-view').style.display = 'none';
+  document.getElementById('cwih-action-back').style.display = 'none';
+  const mainBtn = document.getElementById('cwih-action-main');
+  mainBtn.textContent = '✦ Get Meal Ideas';
+  mainBtn.onclick = cwihGetSuggestions;
+}
+function cwihScanFridge() {
+  showToast('📸 Camera would open here · AI scans fridge contents');
+}
+let cwihServings = 4;
+function adjustServings(delta) {
+  cwihServings = Math.max(1, Math.min(12, cwihServings + delta));
+  document.getElementById('cwih-servings').textContent = cwihServings;
+}
+
+// ── Welcome screen variant switcher ────────────────────────
+function showWelcome(variant) {
+  ['a','b','c'].forEach(function(v) {
+    document.getElementById('welcome-' + v).style.display = (v === variant ? 'flex' : 'none');
+    var tab = document.getElementById('welcome-tab-' + v);
+    if (v === variant) {
+      tab.style.background = 'var(--charcoal)';
+      tab.style.color = 'white';
+    } else {
+      tab.style.background = 'transparent';
+      tab.style.color = 'var(--mid)';
+    }
+  });
+}
+
+// ── Screen navigation ──────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Onboarding logic ───────────────────────────────────────
+const obSteps = [
+  { label: 'Step 1 of 8', title: 'Who calls this place home?',         sub: 'Help us tailor BrightHouse perfectly for your household.' },
+  { label: 'Step 2 of 8', title: 'What type of home do you have?',     sub: 'This helps us recommend the right services and suppliers.' },
+  { label: 'Step 3 of 8', title: 'What features does your home have?', sub: 'Select all spaces and facilities that apply.' },
+  { label: 'Step 4 of 8', title: 'Do you have household staff?',       sub: 'We\'ll make sure their needs are always covered.' },
+  { label: 'Step 5 of 8', title: 'Any dietary restrictions or allergies?', sub: 'We\'ll make sure your meal suggestions are safe for everyone.' },
+  { label: 'Step 6 of 8', title: 'What\'s your favourite meal style?', sub: 'We\'ll use this to generate your weekly menu.' },
+  { label: 'Step 7 of 8', title: 'What do you want help with first?',  sub: 'We\'ll prioritise these when you open BrightHouse.' },
+  { label: 'Step 8 of 8', title: 'Almost done — one last thing.',      sub: 'When should we remind you, and what stresses you most?' },
+];
+
+let obCurrent = 0;
+
+function updateOb() {
+  const d = obSteps[obCurrent];
+  document.getElementById('ob-step-label').textContent = d.label;
+  document.getElementById('ob-q-title').textContent   = d.title;
+  document.getElementById('ob-q-sub').textContent     = d.sub;
+
+  // Progress segments
+  const segs = document.getElementById('ob-segs').children;
+  for (let i = 0; i < segs.length; i++) {
+    segs[i].className = 'ob-prog-seg' + (i < obCurrent ? ' done' : i === obCurrent ? ' active' : '');
+  }
+
+  // Show/hide panels
+  for (let i = 1; i <= 8; i++) {
+    document.getElementById('ob-panel-' + i).classList.toggle('active', i - 1 === obCurrent);
+  }
+
+  // Back button visibility
+  const back = document.getElementById('ob-back-btn');
+  back.style.opacity = obCurrent > 0 ? '1' : '0';
+  back.style.pointerEvents = obCurrent > 0 ? 'auto' : 'none';
+
+  // Next button label
+  document.getElementById('ob-next-btn').textContent = obCurrent === 7 ? "Let's go →" : 'Continue';
+}
+
+function obNext() {
+  if (obCurrent < 7) { obCurrent++; updateOb(); }
+  else { showScreen('screen-dashboard'); }
+}
+
+function obBack() {
+  if (obCurrent > 0) { obCurrent--; updateOb(); }
+}
+
+// ── Option card single-select ──────────────────────────────
+function selectOpt(el) {
+  el.closest('.option-grid').querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── Chip multi-select ──────────────────────────────────────
+function toggleChip(el) { el.classList.toggle('selected'); }
+
+// ── Filter chip (single-select within row) ─────────────────
+function filterChip(el) {
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── Steppers ───────────────────────────────────────────────
+const stepVals = { adults: 2, kids: 1, pets: 0, cars: 1, ageBaby: 0, ageKid: 1, ageTeen: 0 };
+function stepChange(key, delta) {
+  stepVals[key] = Math.max(0, stepVals[key] + delta);
+  document.getElementById(key + '-val').textContent = stepVals[key];
+}
+
+// ── Task checkbox toggle ───────────────────────────────────
+function toggleTask(el) { el.classList.toggle('done'); }
+
+// ── Assign Task Flow (2-step) ──────────────────────────────
+let currentAssignBtn = null;
+let pendingAssignee = null;
+let pendingAssigneeRole = null;
+
+function openAssign(taskName, triggerBtn) {
+  document.getElementById('modal-task-name').textContent = taskName;
+  document.getElementById('modal-task-name-2').textContent = taskName;
+  document.getElementById('assign-modal').classList.add('open');
+  document.getElementById('assign-step-1').style.display = 'block';
+  document.getElementById('assign-step-2').style.display = 'none';
+  document.body.style.overflow = 'hidden';
+  currentAssignBtn = triggerBtn;
+}
+
+function closeAssign() {
+  document.getElementById('assign-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  currentAssignBtn = null;
+  pendingAssignee = null;
+}
+
+function closeAssignOnBg(e) {
+  if (e.target === document.getElementById('assign-modal')) closeAssign();
+}
+
+// Step 1: User picked an assignee → move to Step 2 to configure
+function pickAssignee(name, role) {
+  if (name === 'NEW') {
+    // Show "add new contact" inline form (simple toast for prototype)
+    showToast('+ New contact form would open here');
+    return;
+  }
+  pendingAssignee = name;
+  pendingAssigneeRole = role;
+
+  // Update Step 2 summary
+  document.getElementById('step2-name').textContent = name;
+  document.getElementById('step2-role').textContent = role || '';
+  var av = document.getElementById('step2-avatar');
+  av.textContent = name === 'BrightHouse Concierge' ? '✦' : name.charAt(0).toUpperCase();
+  var bgMap = {
+    'Me': 'var(--charcoal)', 'Spouse': '#A8615E',
+    'Maria': '#6B8F71', 'Ben': '#3A6B8A',
+    'Tony': '#8B6420', 'Roel': '#2C2B27',
+    'BrightHouse Concierge': 'var(--gold)'
+  };
+  av.style.background = bgMap[name] || 'var(--mid)';
+
+  // Transition to Step 2
+  document.getElementById('assign-step-1').style.display = 'none';
+  document.getElementById('assign-step-2').style.display = 'block';
+}
+
+function backToStep1() {
+  document.getElementById('assign-step-1').style.display = 'block';
+  document.getElementById('assign-step-2').style.display = 'none';
+}
+
+// Step 2: Send Task or Save Assignment
+function finalizeAssign(sent) {
+  const assignee = pendingAssignee;
+  closeAssign();
+
+  // Update the triggering button to show assignment
+  if (currentAssignBtn) {
+    currentAssignBtn.classList.add('assigned');
+    const isBH = assignee === 'BrightHouse Concierge';
+    currentAssignBtn.innerHTML = isBH ? '✦ BrightHouse' : '✓ ' + assignee;
+  }
+
+  // Confirmation toast
+  if (sent) {
+    showToast(assignee === 'BrightHouse Concierge'
+      ? '✦ Concierge request submitted'
+      : '📨 Task sent to ' + assignee);
+  } else {
+    showToast('💾 Assignment saved for ' + assignee);
+  }
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `
+    position:fixed; bottom:96px; left:50%; transform:translateX(-50%);
+    background:var(--charcoal); color:white;
+    padding:10px 20px; border-radius:999px;
+    font-family:var(--font-body); font-size:13px; font-weight:500;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2);
+    z-index:300; white-space:nowrap;
+    animation: toastIn 0.25s ease;
+  `;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; }, 2000);
+  setTimeout(() => t.remove(), 2400);
+}
+
+
+// ── Bottom nav switching ───────────────────────────────────
+function setNav(navEl, screenId) {
+  // Update active nav in this screen's bottom-nav only
+  navEl.closest('.bottom-nav').querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  navEl.classList.add('active');
+  showScreen(screenId);
+}
+</script>
+
+</body>
+</html>

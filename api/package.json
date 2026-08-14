@@ -1,0 +1,28 @@
+{
+  "name": "bria-api",
+  "version": "1.0.0",
+  "description": "Bria by Brighthouse — Local API",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --reporter=verbose"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@fastify/cors": "^10.0.2",
+    "@supabase/supabase-js": "^2.108.0",
+    "dotenv": "^16.5.0",
+    "fastify": "^5.4.0",
+    "groq-sdk": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8"
+  }
+}
