@@ -2,504 +2,274 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BRIA — Everyone could use a House Manager. Now you have one.</title>
-<meta name="description" content="BRIA handles the everyday chaos so you don't have to — and when you need a real person to step in, we've got you. No retail upsells. Real help that actually follows through. Join the waitlist.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BRIA — Everyone could use a House Manager.</title>
+<meta name="description" content="You've been running the household for years. BRIA helps carry it. Tell us what's falling through the cracks, and we take it from there, by phone and email. Founding households now open.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cpath d=%27M10 58 V30 C10 17.8 19.8 8 32 8 C44.2 8 54 17.8 54 30 V58 Z%27 fill=%27%2322403B%27/%3E%3Cpath d=%27M22 58 V32 C22 26.5 26.5 22 32 22 C37.5 22 42 26.5 42 32 V58 Z%27 fill=%27%23F09A4B%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,420;0,9..144,500;0,9..144,600;1,9..144,420;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Layout: one calm column of sections on Warm White; the lit-door mark sets the tone. Brand sheet v1 (Aug 2026). */
   :root{
-    --cream:#F7F3EC;
-    --cream-deep:#EFEAE0;
-    --ink:#2A2A28;
-    --ink-soft:#5C5B55;
-    --sage:#6B8068;
-    --sage-deep:#4F6450;
-    --sage-tint:#E4ECE0;
-    --terracotta:#C56A4A;
-    --terracotta-tint:#F6E4DA;
-    --line:rgba(42,42,40,0.12);
-    --max:1180px;
+    --green:#22403B;      /* Deep Green: leads */
+    --apricot:#F09A4B;    /* Apricot: the light, one accent per composition */
+    --teal:#2A9D8F;       /* Teal: reserved for the human */
+    --white:#FFF6EC;      /* Warm White */
+    --card:#FFFFFF;
+    --soft:rgba(34,64,59,0.68);
+    --line:rgba(34,64,59,0.14);
+    --tint:#F5EADB;
+    --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+    --sans:'Hanken Grotesk',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+    --max:1080px;
   }
   *,*::before,*::after{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
-  body{
-    margin:0;
-    background:var(--cream);
-    color:var(--ink);
-    font-family:'Manrope',sans-serif;
-    font-size:17px;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-  }
+  body{margin:0;background:var(--white);color:var(--green);font-family:var(--sans);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;}
   img,svg{display:block;max-width:100%;}
-  a{color:inherit;}
-  h1,h2,h3{
-    font-family:'Fraunces',serif;
-    font-weight:500;
-    line-height:1.08;
-    margin:0;
-    letter-spacing:-0.01em;
-  }
-  .eyebrow{
-    font-family:'Manrope',sans-serif;
-    font-weight:700;
-    font-size:12.5px;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    color:var(--sage-deep);
-  }
-  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px;}
-  section{padding:88px 0;}
-  @media(min-width:840px){section{padding:128px 0;}}
+  a{color:var(--teal);}
+  h1,h2,h3{margin:0;font-weight:400;text-wrap:balance;}
+  h1,h2{font-family:var(--serif);line-height:1.05;letter-spacing:-0.01em;}
+  h3{font-family:var(--sans);font-weight:600;}
+  p{margin:0;}
+  .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--teal);}
+  .wrap{max-width:var(--max);margin:0 auto;padding-left:max(20px, env(safe-area-inset-left, 0px));padding-right:max(20px, env(safe-area-inset-right, 0px));}
+  section{padding-block:80px;}
+  @media(min-width:860px){section{padding-block:112px;}}
+  .section-head{display:flex;flex-direction:column;gap:14px;max-width:36ch;margin-bottom:44px;}
+  .section-head h2{font-size:clamp(32px,4.4vw,46px);}
+  a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2.5px solid var(--teal);outline-offset:3px;}
+  @media (prefers-reduced-motion: reduce){*{transition-duration:0.001ms !important;scroll-behavior:auto !important;}}
 
-  /* focus visibility */
-  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
-    outline:2.5px solid var(--terracotta);
-    outline-offset:3px;
-  }
+  /* nav */
+  .nav{position:sticky;top:0;z-index:40;background:rgba(255,246,236,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:16px;}
+  .logo{display:flex;align-items:center;gap:6px;text-decoration:none;}
+  .nav-cta{font-weight:700;font-size:14.5px;background:var(--green);color:var(--white);padding:11px 20px;border-radius:100px;text-decoration:none;white-space:nowrap;transition:background .2s ease;}
+  .nav-cta:hover{background:#2E5650;}
 
-  @media (prefers-reduced-motion: reduce){
-    *{animation-duration:0.001ms !important;animation-iteration-count:1 !important;transition-duration:0.001ms !important;scroll-behavior:auto !important;}
-  }
+  /* hero */
+  .hero{padding-block:64px 80px;}
+  .hero-grid{display:grid;gap:48px;align-items:center;}
+  @media(min-width:940px){.hero-grid{grid-template-columns:1.1fr 0.9fr;gap:56px;}}
+  .hero-copy{display:flex;flex-direction:column;gap:20px;}
+  .hero h1{font-size:clamp(44px,7vw,76px);max-width:12ch;}
+  .hero .sub{font-size:19px;color:var(--soft);max-width:44ch;}
 
-  /* ---------- NAV ---------- */
-  .nav{
-    position:sticky;top:0;z-index:40;
-    background:rgba(247,243,236,0.88);
-    backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--line);
-  }
-  .nav .wrap{display:flex;align-items:center;justify-content:space-between;padding-top:18px;padding-bottom:18px;}
-  .logo{font-family:'Fraunces',serif;font-weight:600;font-size:22px;letter-spacing:-0.01em;}
-  .logo span{color:var(--terracotta);}
-  .nav-cta{
-    font-family:'Manrope',sans-serif;font-weight:700;font-size:14.5px;
-    background:var(--ink);color:var(--cream);
-    padding:11px 20px;border-radius:100px;
-    text-decoration:none;
-    transition:background .2s ease, transform .2s ease;
-    white-space:nowrap;
-  }
-  .nav-cta:hover{background:var(--sage-deep);transform:translateY(-1px);}
+  /* request card: shows the service in one exchange */
+  .exchange{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 40px rgba(34,64,59,0.08);}
+  .msg{display:flex;gap:10px;align-items:flex-start;}
+  .msg .who{flex:none;width:28px;height:28px;border-radius:50%;}
+  .msg.you .who{background:var(--green);}
+  .msg.bria .who{background:var(--teal);}
+  .bubble{min-width:0;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px;}
+  .msg.bria .bubble{background:#EEF7F5;border-color:rgba(42,157,143,0.25);}
+  .bubble b{font-weight:700;}
+  .options{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px;}
+  .options li{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:6px;}
+  .options .pick{color:var(--teal);font-weight:700;white-space:nowrap;}
+  .exchange-note{font-size:12.5px;color:var(--soft);text-align:center;}
 
-  /* ---------- HERO ---------- */
-  .hero{padding-top:64px;padding-bottom:48px;}
-  @media(min-width:840px){.hero{padding-top:88px;padding-bottom:48px;}}
-  .hero-grid{
-    display:grid;gap:56px;align-items:center;
-  }
-  @media(min-width:980px){
-    .hero-grid{grid-template-columns:1.05fr 0.95fr;gap:40px;}
-  }
-  .hero h1{
-    font-size:clamp(34px,5.6vw,56px);
-    max-width:13ch;
-  }
-  .hero .sub{
-    margin-top:22px;
-    font-size:18px;
-    color:var(--ink-soft);
-    max-width:46ch;
-    line-height:1.65;
-  }
-  .hero .eyebrow{margin-bottom:18px;display:inline-block;}
+  /* familiar */
+  .familiar{background:var(--tint);}
+  .q-grid{display:grid;gap:18px;}
+  @media(min-width:720px){.q-grid{grid-template-columns:1fr 1fr;}}
+  .q-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 26px;display:flex;flex-direction:column;gap:10px;}
+  .q-card h3{font-family:var(--serif);font-weight:400;font-style:italic;font-size:27px;line-height:1.15;}
+  .q-card p{color:var(--soft);font-size:16px;}
 
-  /* signature illustration */
-  .illustration{
-    position:relative;
-    height:420px;
-  }
-  .chaos-item{
-    position:absolute;
-    font-family:'Caveat',cursive;
-    color:var(--ink-soft);
-    font-size:22px;
-    background:#fff;
-    border:1px solid var(--line);
-    padding:8px 14px;
-    border-radius:3px;
-    box-shadow:0 6px 14px rgba(42,42,40,0.08);
-    opacity:0;
-    animation:settle-chaos 0.7s cubic-bezier(.2,.7,.3,1) forwards;
-  }
-  .order-card{
-    position:absolute;
-    right:0;
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:14px;
-    box-shadow:0 14px 30px rgba(42,42,40,0.10);
-    padding:14px 16px;
-    display:flex;align-items:center;gap:10px;
-    font-family:'Manrope',sans-serif;
-    font-weight:600;
-    font-size:14.5px;
-    opacity:0;
-    animation:rise-order 0.6s cubic-bezier(.2,.7,.3,1) forwards;
-  }
-  .order-card .dot{width:9px;height:9px;border-radius:50%;background:var(--sage);flex:none;}
-  .order-card.done .dot{background:var(--terracotta);}
-  .order-card.done span{text-decoration:line-through;color:var(--ink-soft);}
-  .flow-arrow{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    font-family:'Manrope',sans-serif;color:var(--sage);opacity:0.5;
-    font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
-    writing-mode:vertical-rl;
-  }
-  @keyframes settle-chaos{
-    from{opacity:0;transform:translateY(-14px) rotate(var(--r,0deg)) scale(0.92);}
-    to{opacity:1;transform:translateY(0) rotate(var(--r,0deg)) scale(1);}
-  }
-  @keyframes rise-order{
-    from{opacity:0;transform:translateY(14px);}
-    to{opacity:1;transform:translateY(0);}
-  }
+  /* services */
+  .svc-list{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--line);}
+  @media(min-width:720px){.svc-list{grid-template-columns:1fr 1fr;column-gap:48px;}}
+  .svc-list li{display:flex;flex-direction:column;gap:6px;padding:24px 0;border-bottom:1px solid var(--line);}
+  .svc-list h3{font-size:19px;}
+  .svc-list p{color:var(--soft);font-size:16px;}
+  .svc-note{margin-top:28px;font-family:var(--serif);font-style:italic;font-size:clamp(21px,2.4vw,25px);line-height:1.35;max-width:40ch;}
 
-  /* ---------- SOCIAL PROOF ---------- */
-  .proof{padding:36px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
-  .proof .wrap{
-    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;
-  }
-  .proof-line{
-    font-family:'Fraunces',serif;font-style:italic;font-weight:420;
-    font-size:18px;color:var(--ink-soft);
-  }
-  .proof-flags{display:flex;gap:10px;font-size:13px;color:var(--sage-deep);font-weight:700;letter-spacing:0.04em;}
-  .proof-flags span{padding:5px 11px;background:var(--sage-tint);border-radius:100px;}
+  /* how */
+  .how{background:var(--green);color:var(--white);}
+  .how .eyebrow{color:var(--apricot);}
+  .steps{list-style:none;margin:0;padding:0;display:grid;gap:28px;counter-reset:step;}
+  @media(min-width:760px){.steps{grid-template-columns:repeat(4,1fr);gap:28px;}}
+  .steps li{display:flex;flex-direction:column;gap:10px;counter-increment:step;}
+  .steps li::before{content:counter(step);font-family:var(--serif);font-size:44px;line-height:1;color:var(--white);opacity:0.55;}
+  .steps h3{font-size:18px;}
+  .steps p{font-size:15.5px;color:rgba(255,246,236,0.75);}
 
-  /* ---------- PAIN SECTION ---------- */
-  .pain-head{max-width:34ch;margin-bottom:54px;}
-  .pain-head h2{font-size:clamp(28px,4vw,38px);margin-top:14px;}
-  .pain-grid{display:grid;gap:22px;}
-  @media(min-width:760px){.pain-grid{grid-template-columns:repeat(3,1fr);}}
-  .pain-card{
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:30px 26px;
-    box-shadow:0 10px 24px rgba(42,42,40,0.05);
-  }
-  .pain-card:nth-child(1){transform:rotate(-0.6deg);}
-  .pain-card:nth-child(2){transform:rotate(0.4deg);}
-  .pain-card:nth-child(3){transform:rotate(-0.3deg);}
-  .pain-card h3{
-    font-family:'Fraunces',serif;font-weight:500;font-style:italic;
-    font-size:21px;margin-bottom:10px;color:var(--ink);
-  }
-  .pain-card p{margin:0;color:var(--ink-soft);font-size:15.5px;}
+  /* boundaries + behind the scenes */
+  .two-col{display:grid;gap:20px;}
+  @media(min-width:760px){.two-col{grid-template-columns:1fr 1fr;}}
+  .panel{border:1px solid var(--line);border-radius:18px;padding:30px 28px;display:flex;flex-direction:column;gap:14px;background:var(--card);}
+  .panel h2{font-size:30px;}
+  .panel p{color:var(--soft);font-size:16px;}
+  .no-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:16px;}
+  .no-list li{display:flex;gap:10px;align-items:baseline;}
+  .no-list li::before{content:"";flex:none;width:10px;height:2px;background:var(--green);transform:translateY(-4px);}
 
-  /* ---------- PREVIEW ---------- */
-  .preview-section{background:var(--sage-tint);}
-  .preview-head{max-width:38ch;margin-bottom:54px;}
-  .preview-head h2{font-size:clamp(28px,4vw,38px);margin-top:14px;}
-  .preview-grid{display:grid;gap:24px;}
-  @media(min-width:860px){.preview-grid{grid-template-columns:repeat(3,1fr);}}
-  .preview-card{
-    background:#fff;border-radius:18px;border:1px solid var(--line);
-    overflow:hidden;
-    box-shadow:0 14px 30px rgba(42,42,40,0.07);
-  }
-  .preview-mock{
-    padding:22px;background:var(--cream);border-bottom:1px solid var(--line);
-    min-height:168px;
-  }
-  .mock-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:9px;font-size:13px;font-weight:600;}
-  .mock-row .ico{width:20px;height:20px;border-radius:6px;flex:none;}
-  .mock-row.r1 .ico{background:var(--sage);}
-  .mock-row.r2 .ico{background:var(--terracotta);}
-  .mock-row.r3 .ico{background:#cdb676;}
-  .mock-bubble{
-    background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12.5px;color:var(--ink-soft);
-  }
-  .mock-bubble b{color:var(--ink);}
-  .mock-human{display:flex;gap:9px;align-items:flex-start;margin-top:10px;}
-  .mock-human .av{width:26px;height:26px;border-radius:50%;background:var(--terracotta);flex:none;}
-  .mock-human .txt{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12.5px;color:var(--ink-soft);}
-  .preview-copy{padding:20px 22px 26px;}
-  .preview-copy h3{font-size:18px;font-weight:600;margin-bottom:6px;}
-  .preview-copy p{margin:0;color:var(--ink-soft);font-size:14.5px;}
+  /* founder */
+  .founder{display:flex;flex-direction:column;gap:22px;max-width:720px;}
+  .founder-note{display:flex;flex-direction:column;gap:20px;}
+  .founder-note p{font-family:var(--serif);font-size:clamp(21px,2.6vw,25px);line-height:1.5;}
+  .founder-sign{font-weight:700;font-size:14.5px;color:var(--teal);}
 
-  /* ---------- HOW IT WORKS ---------- */
-  .how-grid{display:grid;gap:0;}
-  @media(min-width:860px){.how-grid{grid-template-columns:repeat(3,1fr);gap:36px;}}
-  .how-step{
-    padding:30px 0;border-top:1px solid var(--line);
-  }
-  @media(min-width:860px){.how-step{border-top:none;padding:0;}}
-  .how-num{
-    font-family:'Fraunces',serif;font-style:italic;font-weight:420;
-    font-size:42px;color:var(--terracotta);line-height:1;margin-bottom:16px;
-  }
-  .how-step h3{font-size:21px;margin-bottom:10px;}
-  .how-step p{margin:0;color:var(--ink-soft);font-size:15.5px;max-width:32ch;}
-
-  /* ---------- PRICING ---------- */
-  .pricing-section{background:var(--ink);color:var(--cream);}
-  .pricing-section .eyebrow{color:#C8D6C3;}
-  .pricing-head h2{color:var(--cream);font-size:clamp(28px,4vw,38px);margin-top:14px;max-width:24ch;}
-  .pricing-head p{color:#C9C7BD;max-width:46ch;margin-top:16px;font-size:16px;}
-  .price-grid{display:grid;gap:20px;margin-top:48px;}
-  @media(min-width:760px){.price-grid{grid-template-columns:1fr 1fr;}}
-  .price-card{
-    background:#34362F;border:1px solid rgba(247,243,236,0.12);
-    border-radius:18px;padding:32px 28px;
-  }
-  .price-card.featured{background:var(--sage-deep);border-color:var(--sage-deep);}
-  .price-tier{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#C8D6C3;}
-  .price-amt{font-family:'Fraunces',serif;font-size:42px;margin-top:12px;color:var(--cream);}
-  .price-amt span{font-family:'Manrope',sans-serif;font-size:15px;color:#C9C7BD;font-weight:600;}
-  .price-list{list-style:none;padding:0;margin:22px 0 0;}
-  .price-list li{
-    padding:9px 0;border-top:1px solid rgba(247,243,236,0.12);
-    font-size:14.5px;color:#E3E1D8;
-  }
-  .price-tag{
-    display:inline-block;margin-top:18px;font-size:12.5px;font-weight:700;
-    background:var(--terracotta-tint);color:#8B3A1F;padding:5px 12px;border-radius:100px;
-  }
-
-  /* ---------- FOUNDER NOTE ---------- */
-  .founder-section{max-width:760px;}
-  .founder-section .eyebrow{margin-bottom:24px;display:block;}
-  .founder-note p{
-    font-family:'Fraunces',serif;font-style:italic;font-weight:420;
-    font-size:clamp(19px,2.6vw,23px);line-height:1.6;color:var(--ink);
-    margin:0 0 22px;
-  }
-  .founder-sign{
-    margin-top:28px;font-family:'Manrope',sans-serif;font-weight:700;
-    font-size:14.5px;color:var(--sage-deep);letter-spacing:0.02em;
-  }
-
-  /* ---------- FORMS ---------- */
-  .capture{
-    background:#fff;border:1px solid var(--line);border-radius:20px;
-    padding:30px;box-shadow:0 16px 40px rgba(42,42,40,0.08);
-  }
-  .capture h3{font-size:22px;margin-bottom:6px;}
-  .capture .hint{color:var(--ink-soft);font-size:14.5px;margin:0 0 22px;}
+  /* forms */
+  .capture{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:14px;max-width:480px;}
+  .capture h3{font-size:20px;}
+  .capture .hint{color:var(--soft);font-size:15px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
   .field-row{display:grid;gap:14px;}
-  @media(min-width:600px){.field-row.two{grid-template-columns:1fr 1fr;}}
-  label{display:block;font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;letter-spacing:0.01em;}
-  input[type=text],input[type=email],select{
-    width:100%;font-family:'Manrope',sans-serif;font-size:15px;
-    padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);
-    background:var(--cream);color:var(--ink);
-  }
-  input::placeholder{color:#A6A49B;}
-  .field{margin-bottom:14px;}
-  .submit-btn{
-    margin-top:8px;width:100%;
-    font-family:'Manrope',sans-serif;font-weight:700;font-size:15.5px;
-    background:var(--terracotta);color:#fff;border:none;
-    padding:15px 20px;border-radius:12px;cursor:pointer;
-    transition:background .2s ease, transform .2s ease;
-  }
-  .submit-btn:hover{background:#A8543A;transform:translateY(-1px);}
-  .form-note{font-size:12.5px;color:var(--ink-soft);margin-top:12px;text-align:center;}
+  @media(min-width:560px){.field-row.two{grid-template-columns:1fr 1fr;}}
+  label{font-size:13px;font-weight:700;color:var(--soft);}
+  label .opt{font-weight:400;}
+  input[type=text],input[type=email],textarea{width:100%;font:inherit;font-size:16px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--white);color:var(--green);}
+  textarea{min-height:84px;resize:vertical;}
+  input::placeholder,textarea::placeholder{color:rgba(34,64,59,0.42);}
+  .submit-btn{width:100%;font:inherit;font-weight:700;font-size:16px;background:var(--apricot);color:var(--green);border:none;padding:15px 20px;border-radius:12px;cursor:pointer;transition:filter .2s ease;}
+  .submit-btn:hover{filter:brightness(0.95);}
+  .submit-btn:disabled{opacity:0.7;cursor:default;}
+  .form-note{font-size:12.5px;color:var(--soft);text-align:center;}
+  .form-error{color:#A4472A;font-size:13.5px;text-align:center;}
+  .form-done{display:flex;flex-direction:column;gap:8px;text-align:center;padding-block:16px;}
+  .form-done h3{font-family:var(--serif);font-weight:400;font-size:28px;}
+  .form-done p{color:var(--soft);font-size:15px;}
 
-  .hero-capture{max-width:440px;}
-  .final-section{text-align:center;}
-  .final-section .wrap{max-width:600px;}
-  .final-section h2{font-size:clamp(28px,4.4vw,40px);margin-top:14px;}
-  .final-section .capture{margin-top:36px;text-align:left;}
+  .final{text-align:center;}
+  .final .wrap{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .final h2{font-size:clamp(34px,4.6vw,48px);max-width:18ch;}
+  .final .capture{text-align:left;width:100%;max-width:560px;margin-top:20px;}
 
-  /* reveal-on-scroll */
-  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease;}
-  .reveal.in{opacity:1;transform:translateY(0);}
-
-  footer{padding:40px 0;text-align:center;color:var(--ink-soft);font-size:13.5px;border-top:1px solid var(--line);}
+  footer{padding-block:36px;text-align:center;color:var(--soft);font-size:13.5px;border-top:1px solid var(--line);}
 </style>
 </head>
 <body>
 
 <nav class="nav">
   <div class="wrap">
-    <div class="logo">bria<span>.</span></div>
-    <a href="#join" class="nav-cta">Get early access</a>
+    <a class="logo" href="/" aria-label="BRIA home">
+      <svg width="38" height="38" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 58 V30 C10 17.8 19.8 8 32 8 C44.2 8 54 17.8 54 30 V58 Z" fill="#22403B"/><path d="M20 58 V32 C20 25.4 25.4 20 32 20 C38.6 20 44 25.4 44 32 V58 Z" fill="#F09A4B"/><circle cx="25.5" cy="46" r="5" fill="#22403B"/><circle cx="38.5" cy="46" r="5" fill="#2A9D8F"/></svg>
+      <svg width="82" height="38" viewBox="0 0 138 64" aria-hidden="true"><path d="M22 8 V44 M22 44 a13 13 0 1 0 13 -13 a13 13 0 0 0 -13 13" fill="none" stroke="#22403B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="8" r="5" fill="#F09A4B"/><path d="M62 57 V31 M62 37 A9 9 0 0 1 71 31" fill="none" stroke="#22403B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M85 31 V57" fill="none" stroke="#22403B" stroke-width="7" stroke-linecap="round"/><circle cx="85" cy="16" r="5" fill="#F09A4B"/><path d="M125 31 V57 M125 44 a13 13 0 1 1 -26 0 a13 13 0 1 1 26 0" fill="none" stroke="#22403B" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <a href="#join" class="nav-cta">Request a founding spot</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
   <div class="wrap hero-grid">
-    <div>
-      <span class="eyebrow">For every household carrying more than it should</span>
-      <h1>Everyone could use a House Manager. Now you have one.</h1>
-      <p class="sub">BRIA handles the everyday chaos so you don't have to — and when you need a real person to step in, we've got you.</p>
-      <div class="hero-capture" style="margin-top:32px;">
-        <form class="capture" id="hero-form" name="bria-waitlist-hero" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-          <input type="hidden" name="form-name" value="bria-waitlist-hero">
-          <p style="display:none;"><input name="bot-field"></p>
-          <h3>Get early access</h3>
-          <p class="hint">First 100 households get 50% off, for life.</p>
+    <div class="hero-copy">
+      <span class="eyebrow">Founding households now open</span>
+      <h1>Everyone could use a House Manager.</h1>
+      <p class="sub">You've been running the household for years. BRIA helps carry it. Tell us what's falling through the cracks, and we take it from there, by phone and email.</p>
+      <form class="capture" id="hero-form" name="bria-waitlist-hero" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="bria-waitlist-hero">
+        <p hidden><input name="bot-field"></p>
+        <h3>Request a founding spot</h3>
+        <div class="field-row two">
+          <div class="field">
+            <label for="h-name">First name</label>
+            <input type="text" id="h-name" name="name" placeholder="Your name" autocomplete="given-name" required>
+          </div>
           <div class="field">
             <label for="h-email">Email</label>
-            <input type="email" id="h-email" name="email_address" placeholder="you@email.com" required>
+            <input type="email" id="h-email" name="email_address" placeholder="you@email.com" autocomplete="email" required>
           </div>
-          <button type="submit" class="submit-btn">Join the waitlist</button>
-          <p class="form-note">No spam. One email when we launch.</p>
-          <p class="form-note" style="margin-top:6px;">Your data stays yours. No Amazon ecosystem, no retail upsells, ever.</p>
-        </form>
-      </div>
+        </div>
+        <button type="submit" class="submit-btn">Request a spot</button>
+        <p class="form-note">We'll reach out personally. No spam, ever.</p>
+      </form>
     </div>
-    <div class="illustration" aria-hidden="true">
-      <div class="chaos-item" style="--r:-7deg; top:6%; left:2%; animation-delay:.05s;">dentist?? when??</div>
-      <div class="chaos-item" style="--r:5deg; top:24%; left:22%; animation-delay:.18s;">warranty exp. ???</div>
-      <div class="chaos-item" style="--r:-4deg; top:46%; left:4%; animation-delay:.3s;">milk, eggs, ??? for dinner</div>
-      <div class="chaos-item" style="--r:6deg; top:66%; left:16%; animation-delay:.42s;">call re: A/C noise</div>
-      <div class="chaos-item" style="--r:-3deg; top:84%; left:0%; animation-delay:.54s;">who's picking up???</div>
-      <div class="flow-arrow">becomes</div>
-      <div class="order-card" style="top:10%; width:78%; animation-delay:.7s;"><span class="dot"></span><span>Dentist — Tue 3:30pm</span></div>
-      <div class="order-card done" style="top:30%; width:70%; animation-delay:.82s;"><span class="dot"></span><span>A/C repair — booked</span></div>
-      <div class="order-card" style="top:50%; width:82%; animation-delay:.94s;"><span class="dot"></span><span>This week's groceries — sent</span></div>
-      <div class="order-card" style="top:70%; width:66%; animation-delay:1.06s;"><span class="dot"></span><span>Warranty — saved, tracked</span></div>
+
+    <div class="exchange" aria-label="Example of a BRIA request">
+      <div class="msg you"><span class="who" aria-hidden="true"></span><div class="bubble">"Do you know a good cleaner? We need someone every other week."</div></div>
+      <div class="msg bria"><span class="who" aria-hidden="true"></span><div class="bubble"><b>Here are three cleaning companies near you</b>, compared on reviews, insurance, and price.
+        <ul class="options">
+          <li><span>Company A · insured, biweekly</span><span class="pick">Our pick</span></li>
+          <li><span>Company B · insured, weekly only</span></li>
+          <li><span>Company C · newer, fewer reviews</span></li>
+        </ul>
+      </div></div>
+      <div class="msg bria"><span class="who" aria-hidden="true"></span><div class="bubble">Want me to set up a first visit?</div></div>
+      <p class="exchange-note">An example request. Names shown are placeholders.</p>
     </div>
   </div>
 </section>
 
-<!-- SOCIAL PROOF -->
-<div class="proof">
+<!-- SOUND FAMILIAR -->
+<section class="familiar">
   <div class="wrap">
-    <div class="proof-line">"Built with input from households across 3 continents."</div>
-    <div class="proof-flags"><span>US</span><span>PH</span><span>AU</span><span>+more</span></div>
-  </div>
-</div>
-
-<!-- PAIN -->
-<section class="pain">
-  <div class="wrap">
-    <div class="pain-head reveal">
-      <span class="eyebrow">The questions that live in your head, rent-free</span>
-      <h2>You're not disorganized. You're just the only one tracking it.</h2>
+    <div class="section-head">
+      <span class="eyebrow">Sound familiar?</span>
+      <h2>You're not disorganized. You're the one holding it all.</h2>
     </div>
-    <div class="pain-grid">
-      <div class="pain-card reveal"><h3>"What's for dinner?"</h3><p>Asked at 6pm, every night, like it's the first time anyone's wondered.</p></div>
-      <div class="pain-card reveal"><h3>"Did I book the plumber?"</h3><p>You meant to. Three weeks ago. The leak is still there.</p></div>
-      <div class="pain-card reveal"><h3>"Where's the warranty?"</h3><p>Somewhere. In an inbox, a drawer, a folder you can't find right now.</p></div>
+    <div class="q-grid">
+      <div class="q-card"><h3>"Do you know a good cleaner?"</h3><p>You've asked around for weeks. We find and compare trusted cleaning companies for you.</p></div>
+      <div class="q-card"><h3>"Did we ever get the heater checked?"</h3><p>Winter's coming, and nobody remembers the last time.</p></div>
+      <div class="q-card"><h3>"What's a good vacuum cleaner?"</h3><p>Every review says something different.</p></div>
+      <div class="q-card"><h3>"What's the plumber's number again?"</h3><p>Everyone asks you, because it's only in your head.</p></div>
     </div>
   </div>
 </section>
 
-<!-- PREVIEW -->
-<section class="preview-section">
+<!-- SERVICES -->
+<section>
   <div class="wrap">
-    <div class="preview-head reveal">
-      <span class="eyebrow">What BRIA actually does — and actually finishes</span>
-      <h2>AI for the everyday. A real person for the rest.</h2>
+    <div class="section-head">
+      <span class="eyebrow">What we take off your plate</span>
+      <h2>The household details that keep landing on you.</h2>
     </div>
-    <div class="preview-grid">
-      <div class="preview-card reveal">
-        <div class="preview-mock">
-          <div class="mock-row r1"><div class="ico"></div>Mon — Bathroom, 15 min</div>
-          <div class="mock-row r2"><div class="ico"></div>Wed — Kitchen deep clean</div>
-          <div class="mock-row r3"><div class="ico"></div>Fri — Laundry, 2 loads</div>
-        </div>
-        <div class="preview-copy"><h3>Plans that fit your week</h3><p>Not a generic checklist — broken into sized, realistic tasks for your actual home.</p></div>
-      </div>
-      <div class="preview-card reveal">
-        <div class="preview-mock">
-          <div class="mock-bubble"><b>This week's meals:</b> Mon — sheet-pan chicken · Tue — pasta + greens · Wed — leftovers night</div>
-          <div class="mock-row r1" style="margin-top:10px;"><div class="ico"></div>Grocery list — 12 items</div>
-        </div>
-        <div class="preview-copy"><h3>Meals, planned for you</h3><p>AI builds the week's meals and the grocery list that goes with it.</p></div>
-      </div>
-      <div class="preview-card reveal">
-        <div class="preview-mock">
-          <div class="mock-bubble"><b>You asked:</b> "Find someone to fix the dryer this week."</div>
-          <div class="mock-human"><div class="av"></div><div class="txt">Got it — researching 3 local options now, I'll send you pricing by tonight.</div></div>
-          <div class="mock-human" style="margin-top:8px;"><div class="av"></div><div class="txt">Done — got you 3 quotes. Cheapest is $185, available Thursday. Want me to book it?</div></div>
-        </div>
-        <div class="preview-copy"><h3>Real help, on request</h3><p>A real person researches, books, and closes the loop — so it's actually handled, not just acknowledged.</p></div>
-      </div>
-    </div>
+    <ul class="svc-list">
+      <li><h3>Finding trusted help for your home</h3><p>Cleaning companies, plumbers, electricians, and other home services, compared, with our recommendation.</p></li>
+      <li><h3>Repairs and maintenance</h3><p>We coordinate the appointment or the follow-up, so it actually gets done.</p></li>
+      <li><h3>Things for the home</h3><p>We research appliances and home essentials and tell you which one we'd choose.</p></li>
+      <li><h3>Household information</h3><p>We get it out of your head and organized: who to call, what's due, and when.</p></li>
+    </ul>
+    <p class="svc-note">Every recommendation comes with our pick and the reason, from more than 10 years of running homes.</p>
   </div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section class="how">
   <div class="wrap">
-    <div class="pain-head reveal">
-      <span class="eyebrow">Getting started</span>
-      <h2>Three steps. About five minutes.</h2>
+    <div class="section-head">
+      <span class="eyebrow">How it works</span>
+      <h2>Simple, and handled.</h2>
     </div>
-    <div class="how-grid">
-      <div class="how-step reveal">
-        <div class="how-num">01</div>
-        <h3>Add your household</h3>
-        <p>Tell BRIA about your home, your family, what's already stressing you out.</p>
-      </div>
-      <div class="how-step reveal">
-        <div class="how-num">02</div>
-        <h3>BRIA plans your week</h3>
-        <p>Cleaning, meals, reminders — organized and realistic, not just a wall of notifications.</p>
-      </div>
-      <div class="how-step reveal">
-        <div class="how-num">03</div>
-        <h3>Ask for real help</h3>
-        <p>Need something handled? A real person researches, books, and follows up for you.</p>
-      </div>
-    </div>
+    <ol class="steps">
+      <li><h3>A handoff email</h3><p>A few questions about what to hand off first. Prefer to talk? We can do a 15-minute call.</p></li>
+      <li><h3>Send a request</h3><p>By email, whenever something comes up.</p></li>
+      <li><h3>We confirm it</h3><p>You know exactly what we'll do before we start.</p></li>
+      <li><h3>It gets handled</h3><p>You hear back by email, with a call if needed.</p></li>
+    </ol>
   </div>
 </section>
 
-<!-- MID-PAGE CAPTURE -->
-<section style="padding:64px 0;">
-  <div class="wrap">
-    <div class="capture reveal" style="max-width:560px;margin:0 auto;text-align:center;">
-      <h3>Like what you're seeing?</h3>
-      <p class="hint">Join households across 3 continents already shaping how BRIA gets built. First 100 get 50% off, for life.</p>
-      <form id="mid-form" name="bria-waitlist-mid" method="POST" data-netlify="true" netlify-honeypot="bot-field" style="text-align:left;">
-        <input type="hidden" name="form-name" value="bria-waitlist-mid">
-        <p style="display:none;"><input name="bot-field"></p>
-        <div class="field">
-          <label for="m-email">Email</label>
-          <input type="email" id="m-email" name="email_address" placeholder="you@email.com" required>
-        </div>
-        <button type="submit" class="submit-btn">Join the waitlist</button>
-      </form>
+<!-- BOUNDARIES + BEHIND THE SCENES -->
+<section>
+  <div class="wrap two-col">
+    <div class="panel">
+      <span class="eyebrow">What we don't do</span>
+      <h2>Clear lines, so you can trust us.</h2>
+      <ul class="no-list">
+        <li>Home visits</li>
+        <li>Handling your money</li>
+        <li>Supervising or evaluating household staff</li>
+        <li>Placing or hiring household staff</li>
+      </ul>
     </div>
-  </div>
-</section>
-
-<!-- PRICING -->
-<section class="pricing-section">
-  <div class="wrap">
-    <div class="pricing-head reveal">
-      <span class="eyebrow">Beta pricing</span>
-      <h2>Simple now. We'll tell you before anything changes.</h2>
-      <p>Start free. Upgrade only if BRIA earns it.</p>
-    </div>
-    <div class="price-grid">
-      <div class="price-card reveal">
-        <div class="price-tier">Free</div>
-        <div class="price-amt">$0</div>
-        <ul class="price-list">
-          <li>Dashboard &amp; manual reminders</li>
-          <li>Basic tracking</li>
-          <li>1 free concierge request, on us</li>
-        </ul>
-      </div>
-      <div class="price-card featured reveal">
-        <div class="price-tier">Premium</div>
-        <div class="price-amt">$9.99<span>/month</span></div>
-        <ul class="price-list">
-          <li>Full AI meal &amp; cleaning planner</li>
-          <li>Smart reminders, not static ones</li>
-          <li>Pantry &amp; repair tracking</li>
-        </ul>
-        <span class="price-tag">First 100 get 50% off, for life</span>
-      </div>
+    <div class="panel">
+      <span class="eyebrow">How we work behind the scenes</span>
+      <h2>A real person on every request.</h2>
+      <p>We use AI tools to make our research faster, so more of your time with us goes toward getting things done. A real person reviews every recommendation and makes every call.</p>
+      <p>A BRIA app is on the way, and founding households get first access.</p>
     </div>
   </div>
 </section>
 
 <!-- FOUNDER NOTE -->
-<section>
+<section class="familiar">
   <div class="wrap">
-    <div class="founder-section reveal">
+    <div class="founder">
       <span class="eyebrow">Why I'm building this</span>
       <div class="founder-note">
         <p>For over a decade, I've worked inside households for ultra-high-net-worth families here in New York City. I've seen up close everything it takes to run a home — schedules, staff, guests, repairs, constant coordination.</p>
@@ -513,64 +283,31 @@
 </section>
 
 <!-- FINAL CTA -->
-<section class="final-section" id="join">
+<section class="final" id="join">
   <div class="wrap">
-    <span class="eyebrow reveal">Join the waitlist</span>
-    <h2 class="reveal">Be one of the first 100 households.</h2>
-    <div class="capture reveal">
-      <h3>Get early access</h3>
-      <p class="hint">First 100 households get 50% off, for life.</p>
-      <form id="footer-form" name="bria-waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-        <input type="hidden" name="form-name" value="bria-waitlist">
-        <p style="display:none;"><input name="bot-field"></p>
-        <div class="field-row two">
-          <div class="field">
-            <label for="f-name">First name</label>
-            <input type="text" id="f-name" name="name" placeholder="Your name" required>
-          </div>
-          <div class="field">
-            <label for="f-email">Email</label>
-            <input type="email" id="f-email" name="email_address" placeholder="you@email.com" required>
-          </div>
-        </div>
-        <div class="field-row two">
-          <div class="field">
-            <label for="f-country">Country</label>
-            <select id="f-country" name="country" required>
-              <option value="">Select one</option>
-              <option>United States</option>
-              <option>Philippines</option>
-              <option>Australia</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-stress">Biggest household stressor</label>
-            <select id="f-stress" name="stressor" required>
-              <option value="">Select one</option>
-              <option>Cleaning &amp; laundry</option>
-              <option>Meal planning</option>
-              <option>Budgeting</option>
-              <option>Repairs &amp; vendors</option>
-              <option>Appointments</option>
-              <option>Something else</option>
-            </select>
-          </div>
+    <span class="eyebrow">Founding households</span>
+    <h2>Founding spots are limited.</h2>
+    <form class="capture" id="footer-form" name="bria-waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="bria-waitlist">
+      <p hidden><input name="bot-field"></p>
+      <h3>Request a founding spot</h3>
+      <div class="field-row two">
+        <div class="field">
+          <label for="f-name">First name</label>
+          <input type="text" id="f-name" name="name" placeholder="Your name" autocomplete="given-name" required>
         </div>
         <div class="field">
-          <label for="f-pay">Would you pay for help with this?</label>
-          <select id="f-pay" name="willing_to_pay" required>
-            <option value="">Select one</option>
-            <option>Yes — $9.99/mo sounds fair</option>
-            <option>Yes — but only with concierge included</option>
-            <option>Free version only, for now</option>
-            <option>Not sure yet</option>
-          </select>
+          <label for="f-email">Email</label>
+          <input type="email" id="f-email" name="email_address" placeholder="you@email.com" autocomplete="email" required>
         </div>
-        <button type="submit" class="submit-btn">Join the waitlist</button>
-        <p class="form-note">No spam. One email when we launch.</p>
-      </form>
-    </div>
+      </div>
+      <div class="field">
+        <label for="f-handoff">What would you hand off first? <span class="opt">(optional)</span></label>
+        <textarea id="f-handoff" name="first_handoff" placeholder="The one thing that keeps falling through the cracks"></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Request a spot</button>
+      <p class="form-note">We'll reach out personally. No spam, ever.</p>
+    </form>
   </div>
 </section>
 
@@ -579,54 +316,34 @@
 </footer>
 
 <script>
-  // scroll reveal
-  const revealEls = document.querySelectorAll('.reveal');
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-  },{threshold:0.12});
-  revealEls.forEach(el=>io.observe(el));
-
-  // Netlify form submission with success message
+  // Netlify form submission with an inline thank-you
   function showSuccess(form) {
-    form.innerHTML = `
-      <div style="text-align:center;padding:24px 0;">
-        <div style="font-size:36px;margin-bottom:12px;">🎉</div>
-        <h3 style="margin-bottom:8px;">You're on the list!</h3>
-        <p style="color:var(--ink-soft);font-size:15px;margin:0;">We'll be in touch when BRIA launches. One email. No spam.</p>
-      </div>`;
+    form.innerHTML = '<div class="form-done"><h3>Thank you.</h3><p>We\'ve got your request and will reach out personally about a founding spot.</p></div>';
   }
-
   function showError(form) {
     const btn = form.querySelector('.submit-btn');
     btn.disabled = false;
-    btn.textContent = 'Join the waitlist';
-    const existing = form.querySelector('.form-error');
-    if (!existing) {
+    btn.textContent = 'Request a spot';
+    if (!form.querySelector('.form-error')) {
       const err = document.createElement('p');
       err.className = 'form-error';
-      err.style.cssText = 'color:var(--terracotta);font-size:13.5px;margin-top:10px;text-align:center;';
-      err.textContent = 'Something went wrong — please try again.';
+      err.textContent = "That didn't go through. Please check your connection and try again.";
       form.appendChild(err);
     }
   }
-
   async function handleSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const btn = form.querySelector('.submit-btn');
     btn.disabled = true;
-    btn.textContent = 'Joining…';
-
-    const data = new FormData(form);
-
+    btn.textContent = 'Sending…';
     try {
       const res = await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(data).toString(),
+        body: new URLSearchParams(new FormData(form)).toString(),
         redirect: 'manual'
       });
-      // Netlify returns a 302 redirect on success; type will be 'opaqueredirect'
       if (res.ok || res.type === 'opaqueredirect' || res.status === 0 || res.status === 302) {
         showSuccess(form);
       } else {
@@ -636,9 +353,7 @@
       showError(form);
     }
   }
-
   document.getElementById('hero-form').addEventListener('submit', handleSubmit);
-  document.getElementById('mid-form').addEventListener('submit', handleSubmit);
   document.getElementById('footer-form').addEventListener('submit', handleSubmit);
 </script>
 
